@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống quản trị - Luxury Hotel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --gold: #d4af37;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        body { display: flex; height: 100vh; background-color: var(--slate-50); color: var(--slate-800); overflow: hidden; }
+
+        /* SIDEBAR CHUYÊN NGHIỆP */
+        .sidebar { width: 260px; background-color: var(--slate-900); color: white; display: flex; flex-direction: column; border-right: 1px solid var(--slate-800); }
+        .sidebar-header { padding: 24px 20px; text-align: center; font-size: 1.25rem; font-weight: 800; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); letter-spacing: 2px;}
+        .sidebar-header span { color: var(--gold); }
+        
+        .menu { flex: 1; padding: 20px 0; overflow-y: auto; }
+        .menu-item { padding: 14px 24px; display: flex; align-items: center; gap: 12px; color: #94a3b8; cursor: pointer; transition: all 0.2s ease; font-weight: 500; font-size: 0.95rem; border-left: 3px solid transparent;}
+        .menu-item:hover { color: white; background-color: rgba(255,255,255,0.03); }
+        .menu-item.active { background-color: rgba(255,255,255,0.05); color: white; border-left-color: var(--gold); font-weight: 600; }
+        
+        /* KHU VỰC NỘI DUNG CHÍNH */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* TOPBAR TỐI GIẢN */
+        .topbar { background: white; padding: 16px 32px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--slate-200); z-index: 10; }
+        .admin-info { display: flex; align-items: center; gap: 20px; font-size: 0.95rem; }
+        #admin-name { font-weight: 600; color: var(--slate-700); }
+        .btn-logout { background: transparent; color: var(--slate-600); border: 1px solid var(--slate-200); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: 0.2s; }
+        .btn-logout:hover { background: var(--slate-50); color: #ef4444; border-color: #fca5a5; }
+
+        /* KHU VỰC CHUYỂN TAB */
+        .content-area { padding: 32px; overflow-y: auto; flex: 1; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* CARD CHỨA BẢNG DỮ LIỆU */
+        .card { background: white; border-radius: 12px; border: 1px solid var(--slate-200); box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
+        .card-header { padding: 20px 24px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; background: #fff; gap: 15px;}
+        .card-header h2 { font-size: 1.15rem; font-weight: 600; color: var(--slate-800); white-space: nowrap;}
+        
+        /* Header Actions (Cho các nút và ô tìm kiếm nằm cùng dòng) */
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        
+        .search-input { padding: 9px 12px; border: 1px solid var(--slate-300); border-radius: 6px; outline: none; font-size: 0.9rem; width: 250px; transition: 0.2s; color: var(--slate-800); }
+        .search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+        .btn-add { background: var(--slate-800); color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.2s; white-space: nowrap;}
+        .btn-add:hover:not(:disabled) { background: var(--slate-900); box-shadow: 0 4px 12px rgba(15,23,42,0.15); }
+        .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- CUSTOM DROPDOWN (SELECT) CHUYÊN NGHIỆP --- */
+        .custom-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: white;
+            border: 1px solid var(--slate-300);
+            border-radius: 8px;
+            padding: 10px 40px 10px 16px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--slate-800);
+            cursor: pointer;
+            width: 100%;
+            max-width: 350px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+        }
+        .custom-select:hover { border-color: #94a3b8; }
+        .custom-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        /* BẢNG DỮ LIỆU (TABLE) - CLEAN DESIGN */
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 14px 24px; text-align: left; background: #f8fafc; font-size: 0.75rem; text-transform: uppercase; color: var(--slate-600); font-weight: 600; letter-spacing: 0.05em; border-bottom: 1px solid var(--slate-200); }
+        td { padding: 16px 24px; font-size: 0.9rem; color: var(--slate-700); border-bottom: 1px solid var(--slate-100); vertical-align: middle; line-height: 1.5; }
+        tbody tr { transition: background-color 0.15s; }
+        tbody tr:hover { background-color: var(--slate-50); }
+        
+        /* NÚT THAO TÁC (GHOST BUTTONS) */
+        .action-btns { display: flex; gap: 8px; }
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s; background: transparent; }
+        
+        .btn-approve { border: 1px solid #10b981; color: #10b981; }
+        .btn-approve:hover:not(:disabled) { background: #10b981; color: white; }
+        
+        .btn-delete, .btn-cancel { border: 1px solid #ef4444; color: #ef4444; }
+        .btn-delete:hover:not(:disabled), .btn-cancel:hover:not(:disabled) { background: #ef4444; color: white; }
+        
+        .btn-edit { border: 1px solid #3b82f6; color: #3b82f6; }
+        .btn-edit:hover:not(:disabled) { background: #3b82f6; color: white; }
+        
+        .btn-sm:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--slate-200); color: var(--slate-300); background: var(--slate-50); }
+
+        /* STATUS BADGES (PASTEL COLORS) */
+        .status { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: inline-block; letter-spacing: 0.3px;}
+        .status.processing { background: #fef9c3; color: #a16207; }
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.cancelled { background: #f1f5f9; color: var(--slate-600); }
+
+        /* MODAL DÙNG CHUNG */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.2s; backdrop-filter: blur(2px); }
+        .modal.active { opacity: 1; pointer-events: all; }
+        .modal-content { background: white; width: 500px; border-radius: 12px; padding: 32px; transform: scale(0.95); transition: 0.2s; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .modal.active .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h2 { font-size: 1.25rem; color: var(--slate-800); }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--slate-700); }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--slate-300); border-radius: 6px; outline: none; font-size: 0.9rem; color: var(--slate-800); transition: 0.2s;}
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .form-group input:disabled { background-color: var(--slate-100); color: var(--slate-600); cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">LUXURY<span>ADMIN</span></div>
+        <div class="menu">
+            <div class="menu-item active" onclick="switchTab('tab-bookings')">Quản lý đặt phòng</div>
+            <div class="menu-item" onclick="switchTab('tab-hotels')">Quản lý khách sạn</div>
+            <div class="menu-item" onclick="switchTab('tab-rooms')">Quản lý phòng</div>
+            <div class="menu-item" onclick="switchTab('tab-customers')">Quản lý khách hàng</div>
+            <div class="menu-item" onclick="switchTab('tab-promotions')">Quản lý khuyến mãi</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="admin-info">
+                <span id="admin-name">Xin chào, Admin</span>
+                <button class="btn-logout" id="btn-logout">Đăng xuất</button>
+            </div>
+        </div>
+
+        <div class="content-area">
+            
+            <div id="tab-bookings" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Quản lý đơn đặt phòng</h2>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Thông tin dịch vụ</th>
+                                <th>Thời gian</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="booking-list">
+                            <tr><td colspan="7" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-hotels" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Danh sách khách sạn</h2>
+                        <button class="btn-add" onclick="openHotelModal()">+ Thêm khách sạn</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Hình ảnh</th>
+                                <th>Tên khách sạn</th>
+                                <th>Địa điểm</th>
+                                <th>Đánh giá</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hotel-list">
+                            <tr><td colspan="6" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-rooms" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Quản lý phòng</h2>
+                        <select id="room-hotel-select" class="custom-select" onchange="loadRoomsForSelectedHotel()">
+                            <option value="">-- Vui lòng chọn khách sạn --</option>
+                        </select>
+                        <button class="btn-add" id="btn-add-room" onclick="openRoomModal()" disabled>+ Thêm phòng mới</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Loại phòng / Tiện ích</th>
+                                <th>Sức chứa</th>
+                                <th>Giá (VNĐ/đêm)</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="room-list-admin">
+                            <tr><td colspan="5" style="text-align: center; color: #64748b;">Vui lòng chọn khách sạn ở trên để xem danh sách phòng.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-customers" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Danh sách khách hàng</h2>
+                        <div class="header-actions">
+                            <input type="text" id="search-customer" class="search-input" placeholder="Tìm theo tên, email..." onkeyup="handleSearchCustomer(event)">
+                            <button class="btn-add" onclick="openCustomerModal()">+ Thêm khách hàng</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tài khoản</th>
+                                <th>Họ và Tên</th>
+                                <th>Email</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-list-admin">
+                            <tr><td colspan="5" style="text-align: center; color: #64748b;">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-promotions" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Danh sách chương trình khuyến mãi</h2>
+                        <button class="btn-add" onclick="openPromoModal()">+ Tạo khuyến mãi</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mã (Code)</th>
+                                <th>Chương trình</th>
+                                <th>Giảm giá</th>
+                                <th>Thời gian áp dụng</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promo-list-admin">
+                            <tr><td colspan="6" style="text-align: center; color: #64748b;">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal" id="hotelModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="hotelModalTitle">Thêm khách sạn</h2>
+                <button onclick="closeHotelModal()" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+            </div>
+            <input type="hidden" id="h-id">
+            <div class="form-group">
+                <label>Tên Khách Sạn</label>
+                <input type="text" id="h-name" placeholder="VD: Luxury Sea View">
+            </div>
+            <div class="form-group">
+                <label>Địa Điểm</label>
+                <input type="text" id="h-location" placeholder="VD: Đà Nẵng">
+            </div>
+            <div class="form-group">
+                <label>Link Ảnh (URL)</label>
+                <input type="text" id="h-image" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>Mô tả chi tiết</label>
+                <textarea id="h-desc" rows="4"></textarea>
+            </div>
+            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="saveHotel()">Lưu thông tin</button>
+        </div>
+    </div>
+
+    <div class="modal" id="roomModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="roomModalTitle">Thêm Phòng Mới</h2>
+                <button onclick="closeRoomModal()" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+            </div>
+            <input type="hidden" id="r-id">
+            <div class="form-group">
+                <label>Loại Phòng (Kèm diện tích & tiện ích)</label>
+                <input type="text" id="r-type" placeholder="VD: Phòng Đôi - 40m2 - Tivi, Ban công">
+            </div>
+            <div class="form-group">
+                <label>Sức Chứa (Số người)</label>
+                <input type="number" id="r-capacity" placeholder="VD: 2">
+            </div>
+            <div class="form-group">
+                <label>Giá Phòng (VNĐ/đêm)</label>
+                <input type="text" id="r-price" placeholder="VD: 1500000">
+            </div>
+            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="saveRoom()">Lưu Thông Tin Phòng</button>
+        </div>
+    </div>
+
+    <div class="modal" id="customerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="customerModalTitle">Thêm Khách Hàng</h2>
+                <button onclick="closeCustomerModal()" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+            </div>
+            <input type="hidden" id="c-id">
+            
+            <div class="form-group">
+                <label>Họ và Tên</label>
+                <input type="text" id="c-fullname" placeholder="VD: Nguyễn Văn A">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="c-email" placeholder="VD: email@example.com">
+            </div>
+            <div class="form-group">
+                <label>Tên đăng nhập (Chỉ tạo mới)</label>
+                <input type="text" id="c-username" placeholder="VD: nguyenvana">
+            </div>
+            <div class="form-group" id="c-password-group">
+                <label>Mật khẩu</label>
+                <input type="password" id="c-password" placeholder="********">
+            </div>
+
+            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="saveCustomer()">Lưu thông tin</button>
+        </div>
+    </div>
+
+    <div class="modal" id="promoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tạo Chương Trình Khuyến Mãi</h2>
+                <button onclick="closePromoModal()" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Mã Khuyến Mãi (Code)</label>
+                <input type="text" id="p-code" placeholder="VD: SUMMER26" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+                <label>Tên Chương Trình</label>
+                <input type="text" id="p-name" placeholder="VD: Chào Hè Rực Rỡ">
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Giảm giá (%)</label>
+                    <input type="number" id="p-percent" placeholder="VD: 20">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Giảm tối đa (VNĐ)</label>
+                    <input type="number" id="p-max" placeholder="VD: 500000">
+                </div>
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Đơn tối thiểu (VNĐ)</label>
+                    <input type="number" id="p-min" placeholder="VD: 2000000">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Số lượng mã</label>
+                    <input type="number" id="p-limit" placeholder="VD: 100">
+                </div>
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Ngày bắt đầu</label>
+                    <input type="date" id="p-start">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Ngày kết thúc</label>
+                    <input type="date" id="p-end">
+                </div>
+            </div>
+
+            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="savePromo()">Kích hoạt khuyến mãi</button>
+        </div>
+    </div>
+
+    <script type="module" src="./js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khám phá - Luxury Hotel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/vn.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #0f172a;
+            --gold: #d4af37;
+            --bg: #f8fafc;
+            --text: #1e293b;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: var(--primary);
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .logo span {
+            color: var(--gold);
+        }
+
+        .user-menu a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .user-menu a:hover {
+            color: var(--gold);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* THANH TÌM KIẾM CHUẨN CAO CẤP */
+        .search-box {
+            display: flex;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.04);
+            margin-bottom: 50px;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .search-field {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            transition: 0.2s;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .search-field:hover {
+            background: #f8fafc;
+        }
+
+        .field-icon {
+            color: #94a3b8;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .field-content {
+            flex: 1;
+        }
+
+        .field-content label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .field-content input,
+        .field-content select {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .field-content input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .search-divider {
+            width: 1px;
+            height: 40px;
+            background: #e2e8f0;
+            margin: 0 5px;
+        }
+
+        .btn-search {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 18px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-left: 10px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .btn-search:hover {
+            background-color: #1e293b;
+            color: var(--gold);
+        }
+
+        /* Danh sách khách sạn */
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .hotel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .hotel-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #f1f5f9;
+            cursor: pointer;
+        }
+
+        .hotel-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+            border-color: #e2e8f0;
+        }
+
+        .hotel-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .hotel-info {
+            padding: 25px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hotel-info h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .location {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .rating {
+            color: var(--gold);
+            font-weight: 800;
+            font-size: 1.05rem;
+            margin-bottom: 20px;
+        }
+
+        .btn-view {
+            margin-top: auto;
+            text-align: center;
+            display: block;
+            background-color: #f1f5f9;
+            color: var(--primary);
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            transition: 0.2s;
+            font-size: 0.95rem;
+            border: none;
+            width: 100%;
+        }
+
+        .hotel-card:hover .btn-view {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #64748b;
+            font-size: 1rem;
+            grid-column: 1 / -1;
+            padding: 50px;
+            background: white;
+            border-radius: 12px;
+            border: 1px dashed #cbd5e1;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.95rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background-color: #dc2626;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">Luxury<span>Hotel</span></div>
+        <div class="user-menu">
+            <span id="welcome-msg" style="color: #cbd5e1; font-size: 0.95rem;">Xin chào, Khách</span>
+            <a href="my-bookings.html">Lịch sử đặt phòng</a>
+            <a id="btn-logout">Đăng xuất</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="search-box">
+            <div class="search-field" onclick="document.getElementById('locInput').focus()">
+                <div class="field-icon">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                </div>
+                <div class="field-content">
+                    <label>Địa điểm</label>
+                    <input type="text" id="locInput" placeholder="Bạn muốn đi đâu?">
+                </div>
+            </div>
+
+            <div class="search-divider"></div>
+
+            <div class="search-field" onclick="document.getElementById('dateRange').focus()">
+                <div class="field-icon">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+                <div class="field-content">
+                    <label>Ngày lưu trú</label>
+                    <input type="text" id="dateRange" placeholder="Nhận phòng - Trả phòng" readonly>
+                </div>
+            </div>
+
+            <div class="search-divider"></div>
+
+            <div class="search-field">
+                <div class="field-icon">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <div class="field-content">
+                    <select id="capacitySelect"
+                        style="width: 100%; padding: 10px; border: none; outline: none; background: transparent; font-weight: 500; cursor: pointer;">
+                        <option value="all">Mọi sức chứa</option>
+                        <option value="1">1 Người</option>
+                        <option value="2">2 Người</option>
+                        <option value="4">4 Người (Gia đình)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-search" id="btnSearch">Tìm Kiếm</button>
+        </div>
+
+        <h2 class="section-title">Khám phá các điểm đến</h2>
+        <div class="hotel-grid" id="hotel-list">
+            <div class="empty-msg">Đang tải dữ liệu...</div>
+        </div>
+    </div>
+
+    <div id="custom-toast" class="toast">
+        <span id="toast-msg">Nội dung</span>
+    </div>
+
+    <script>
+        // Khởi tạo lịch Flatpickr cho ô Tìm kiếm
+        flatpickr("#dateRange", {
+            mode: "range",
+            minDate: "today",
+            dateFormat: "Y-m-d",
+            locale: "vn",
+            placeholder: "Chọn ngày Check-in và Check-out"
+        });
+    </script>
+    <script type="module" src="./js/dashboard.js"></script>
+</body>
+
+</html>

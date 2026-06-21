@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Khách sạn - Luxury Hotel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/global.css"> 
+    
+    <style>
+        :root { --primary-color: #0f172a; --accent-color: #d4af37; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        body { background-color: #f8fafc; }
+
+        /* Navbar */
+        .navbar { background-color: var(--primary-color); padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .navbar a { color: white; text-decoration: none; margin-left: 20px; font-weight: 600; transition: color 0.3s; }
+        .navbar a:hover { color: var(--accent-color); }
+        .logo { font-size: 1.5rem; font-weight: 800; color: white; text-decoration: none; letter-spacing: 1px;}
+        .logo span { color: var(--accent-color); }
+
+        /* HEADER MỚI CHUẨN 5 SAO */
+        .hotel-header {
+            height: 500px; background-size: cover; background-position: center;
+            position: relative; display: flex; align-items: center; 
+        }
+        .hotel-header::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.4) 50%, transparent 100%);
+        }
+        .header-content { 
+            position: relative; z-index: 2; color: white; width: 100%; 
+            max-width: 1200px; margin: 0 auto; padding: 0 20px;
+            transform: translateY(-20px);
+        }
+        .hotel-badge { background: var(--accent-color); color: #0f172a; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.85rem; display: inline-block; margin-bottom: 15px; letter-spacing: 1px; }
+        .header-content h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 15px; text-shadow: 2px 2px 10px rgba(0,0,0,0.3); line-height: 1.2; }
+        .header-content p.location { font-size: 1.1rem; color: #cbd5e1; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+        .header-content .desc { max-width: 600px; line-height: 1.7; color: #f1f5f9; font-size: 1.05rem; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* THANH TIỆN ÍCH TRÔI NỔI */
+        .floating-info-bar {
+            background: white; border-radius: 16px; padding: 30px 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center;
+            margin-top: -60px; 
+            position: relative; z-index: 10; border: 1px solid #f1f5f9;
+        }
+        .amenities h3 { color: var(--primary-color); margin-bottom: 15px; font-size: 1.2rem; }
+        .amenities-list { display: flex; gap: 15px; flex-wrap: wrap; }
+        .amenity-item { 
+            display: flex; align-items: center; gap: 8px; color: #334155; font-weight: 600; 
+            background: #f8fafc; padding: 10px 18px; border-radius: 30px; font-size: 0.95rem; border: 1px solid #e2e8f0;
+            transition: 0.2s; cursor: default;
+        }
+        .amenity-item:hover { background: #f1f5f9; transform: translateY(-2px); border-color: #cbd5e1; }
+        
+        .rating-box { text-align: right; border-left: 2px dashed #e2e8f0; padding-left: 40px; }
+        .rating-box .score { font-size: 2.8rem; font-weight: 800; color: var(--accent-color); line-height: 1; margin-bottom: 5px; }
+        .rating-box .text { color: #64748b; font-size: 0.95rem; font-weight: 500; }
+
+        /* GRID PHÒNG */
+        .room-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 50px; margin-bottom: 60px;
+        }
+        .room-card {
+            background: white; border-radius: 16px; padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .room-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .room-card h3 { color: var(--primary-color); margin-bottom: 15px; font-size: 1.4rem; }
+        .room-price { font-size: 1.4rem; font-weight: bold; color: #dc2626; margin-bottom: 20px; }
+        .btn-primary.btn-full { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; transition: 0.2s;}
+        .btn-primary.btn-full:hover { background-color: #1e293b; color: var(--accent-color);}
+
+        /* KHU VỰC ĐÁNH GIÁ */
+        .review-section { margin-top: 20px; padding-top: 50px; border-top: 2px solid #e2e8f0; margin-bottom: 80px; }
+        .review-section h2 { font-size: 2rem; color: #0f172a; margin-bottom: 30px; }
+        .review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        
+        .review-card {
+            background: white; border-radius: 16px; padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;
+            position: relative; overflow: hidden;
+        }
+        .review-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent-color);
+        }
+        .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .reviewer-info { display: flex; align-items: center; gap: 12px; }
+        .reviewer-avatar {
+            width: 45px; height: 45px; background: #e2e8f0; color: #475569;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: bold; text-transform: uppercase;
+        }
+        .reviewer-name { font-weight: 700; color: #1e293b; font-size: 1.1rem; }
+        .review-date { font-size: 0.85rem; color: #94a3b8; }
+        .review-stars { margin-bottom: 15px; font-size: 1.1rem; letter-spacing: 2px; }
+        .review-comment { color: #475569; line-height: 1.6; font-size: 0.95rem; font-style: italic; }
+
+        /* MODAL THANH TOÁN KHUYẾN MÃI */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.8); display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s backdrop-filter;
+            backdrop-filter: blur(5px);
+        }
+        .modal.active { opacity: 1; pointer-events: all; }
+        .modal-content {
+            background: white; width: 500px; border-radius: 12px; 
+            padding: 25px; max-height: 90vh; overflow-y: auto;
+            transform: translateY(-30px) scale(0.95); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .modal.active .modal-content { transform: translateY(0) scale(1); }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-header h2 { margin: 0; font-size: 1.3rem; color: #0f172a; } 
+        .close-btn { background: #f1f5f9; border: none; font-size: 1.2rem; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; transition: 0.2s; }
+        .close-btn:hover { background: #e2e8f0; color: #0f172a; }
+        
+        .room-summary {
+            background: #f8fafc; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.95rem; border: 1px solid #e2e8f0;
+        }
+
+        .qr-section { 
+            text-align: center; margin-bottom: 15px; padding: 15px; 
+            background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;
+        }
+        .qr-section img { width: 120px; height: 120px; margin-bottom: 5px; border-radius: 8px; }
+
+        #promo-suggestion-box::-webkit-scrollbar { width: 6px; }
+        #promo-suggestion-box::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        #promo-suggestion-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="customer-dashboard.html" class="logo">Luxury<span>Hotel</span></a>
+        <div>
+            <a href="customer-dashboard.html">← Quay lại tìm kiếm</a>
+            <a href="my-bookings.html">Lịch sử đặt phòng</a>
+        </div>
+    </nav>
+
+    <div class="hotel-header" id="hotel-banner">
+        <div class="container header-content">
+            <div class="hotel-badge">LUXURY 5 STARS</div>
+            <h1 id="hotel-name">Đang tải...</h1>
+            <p class="location" id="hotel-loc">📍 Đang tải...</p>
+            <div class="desc" id="hotel-desc"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="floating-info-bar">
+            <div class="amenities">
+                <h3>Các tiện ích hàng đầu</h3>
+                <div class="amenities-list">
+                    <span class="amenity-item">🏊 Hồ bơi vô cực</span>
+                    <span class="amenity-item">📶 WiFi Tốc độ cao</span>
+                    <span class="amenity-item">🍽️ Buffet sáng</span>
+                    <span class="amenity-item">💆 Spa & Massage</span>
+                    <span class="amenity-item">🏋️ Phòng Gym</span>
+                </div>
+            </div>
+            <div class="rating-box">
+                <div class="score" id="h-rating-big">0.0</div>
+                <div class="text" id="h-reviews-count">Tuyệt vời (0 đánh giá)</div>
+            </div>
+        </div>
+
+        <h2 style="margin-top: 60px; font-size: 2rem; color: var(--primary-color);">Chọn phòng của bạn</h2>
+        <div class="room-grid" id="room-list"></div>
+
+        <div class="review-section">
+            <h2>Đánh giá từ khách hàng thực tế</h2>
+            <div class="review-grid" id="review-list"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="bookingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Xác Nhận Đặt Phòng</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            
+            <div class="room-summary">
+                <div><span style="color: #64748b;">Phòng:</span> <strong id="m-room-name" style="color: #0f172a;">...</strong></div>
+                <div><span style="color: #64748b;">Giá/đêm:</span> <strong id="m-room-price" style="color: #0f172a;">0</strong> ₫</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px; background: #fffbeb; padding: 12px 15px; border-radius: 8px; border: 1px solid #fde68a;">
+                <label style="display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600; color: #1e293b;">📅 Ngày lưu trú của bạn:</label>
+                <div id="display-dates" style="font-size: 1.05rem; color: #b45309; font-weight: 700; text-align: center;">Đang tải...</div>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 6px; text-align: center; font-style: italic;">(Thông tin ngày được tự động lấy từ bộ lọc tìm kiếm)</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600; color: #1e293b;">Hình thức thanh toán:</label>
+                <select id="paymentType" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; font-size: 0.95rem; background: #f8fafc; cursor: pointer;">
+                    <option value="deposit">Đặt cọc 30%</option>
+                    <option value="full">Thanh toán 100%</option>
+                </select>
+            </div>
+
+            <div class="promotion-section" style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px dashed #cbd5e1; margin-bottom: 15px;">
+                <h3 style="font-size: 1rem; margin-bottom: 12px; color: #1e293b;">Mã Giảm Giá</h3>
+                
+                <button type="button" onclick="loadAvailablePromos()" style="background: transparent; color: #3b82f6; border: none; cursor: pointer; margin-bottom: 12px; font-weight: 500; font-size: 0.9rem;">
+                    🎁 Nhấn để xem các mã có sẵn
+                </button>
+                
+                <div id="promo-suggestion-box" style="display: none; background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 12px; max-height: 180px; overflow-y: auto;">
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="customer-promo-code" placeholder="Nhập mã..." style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; text-transform: uppercase; outline: none; font-weight: 500;">
+                    <button type="button" onclick="applyPromoCode()" style="background: #1e293b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 500; transition: 0.2s;">Áp dụng</button>
+                </div>
+
+                <div style="margin-top: 16px; font-size: 0.95rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span>Tạm tính (<span id="m-nights">0</span> đêm):</span>
+                        <strong id="summary-original-price">0 ₫</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #ef4444;">
+                        <span>Giảm giá:</span>
+                        <strong id="summary-discount">- 0 ₫</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 1.1rem; color: #0f172a;">
+                        <span>Thành tiền (Bill):</span>
+                        <strong id="summary-final-price">0 ₫</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0;">
+                <span style="color: #065f46; font-weight: 600; font-size: 0.95rem;">Số tiền cần thanh toán ngay:</span>
+                <strong id="m-total-pay" style="color: #059669; font-size: 1.2rem;">0 VNĐ</strong>
+            </div>
+
+            <div class="qr-section">
+                <p style="margin-bottom: 8px; color: #64748b; font-size: 0.85rem;">Quét mã QR bằng ứng dụng ngân hàng</p>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=ThanhToanLuxuryHotel" alt="QR Code">
+                <p style="color: #475569; font-size: 0.85rem; margin-top: 8px;">Nội dung CK: <strong style="color: #0f172a;">LUXURYHOTEL</strong></p>
+            </div>
+
+            <button class="btn btn-primary btn-full" id="btnConfirmPayment" style="width: 100%; padding: 14px; font-size: 1rem; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; background: #0f172a; color: white; transition: 0.2s;">Xác nhận đã chuyển khoản</button>
+        </div>
+    </div>
+
+    <script type="module" src="./js/hotel-detail.js"></script>
+</body>
+</html>
