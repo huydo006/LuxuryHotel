@@ -2,16 +2,24 @@ package com.luxuryhotel.luxury_hotel_be.service;
 
 import com.luxuryhotel.luxury_hotel_be.dto.HotelDetailResponse;
 import com.luxuryhotel.luxury_hotel_be.dto.HotelDto;
+import com.luxuryhotel.luxury_hotel_be.dto.HotelRequest;
 import com.luxuryhotel.luxury_hotel_be.dto.RoomSimpleDto;
 import com.luxuryhotel.luxury_hotel_be.entity.Hotel;
 import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
 
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -133,6 +141,90 @@ public class HotelService {
         response.setRooms(rooms);
         // response.setReviews(reviewList); // Làm tương tự với Reviews nếu em đã viết
 
+        return response;
+    }
+
+    // Nhớ import cái này ở đầu file nhé:
+    // import org.springframework.transaction.interceptor.TransactionAspectSupport;
+
+    // 1. Hàm THÊM MỚI khách sạn
+    @Transactional(rollbackFor = Exception.class) 
+    public Map<String, Object> createHotel(HotelRequest request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Hotel hotel = new Hotel();
+            hotel.setNameHotel(request.getName());
+            hotel.setAddress(request.getLocation()); // Frontend gọi là location, DB là address
+            hotel.setImage(request.getImage());
+            hotel.setDescription(request.getDescription());
+            
+            // Thiết lập giá trị mặc định cho khách sạn mới
+            hotel.setRating(5); // Khách sạn Luxury mặc định 5 sao
+            hotel.setBookingsCount(0); // Lượt đặt ban đầu là 0
+
+            hotelRepository.save(hotel);
+
+            response.put("success", true);
+            response.put("message", "Thêm khách sạn mới thành công!");
+        } catch (Exception e) {
+            // Lệnh ép Spring phải Rollback Database dù đã dùng try-catch
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            
+            response.put("success", false);
+            response.put("message", "Lỗi khi thêm khách sạn: " + e.getMessage());
+        }
+        return response;
+    }
+
+    // 2. Hàm SỬA khách sạn
+    @Transactional(rollbackFor = Exception.class) // Đổi rollbackOn -> rollbackFor
+    public Map<String, Object> updateHotel(Integer id, HotelRequest request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Hotel hotel = hotelRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khách sạn có ID: " + id));
+
+            // Cập nhật thông tin mới
+            hotel.setNameHotel(request.getName());
+            hotel.setAddress(request.getLocation());
+            hotel.setImage(request.getImage());
+            hotel.setDescription(request.getDescription());
+
+            hotelRepository.save(hotel);
+
+            response.put("success", true);
+            response.put("message", "Cập nhật thông tin khách sạn thành công!");
+        } catch (Exception e) {
+            // Lệnh ép Spring phải Rollback Database
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            
+            response.put("success", false);
+            response.put("message", "Lỗi khi cập nhật: " + e.getMessage());
+        }
+        return response;
+    }
+    // 3. Hàm XÓA khách sạn
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> deleteHotel(Integer id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // Kiểm tra xem khách sạn có tồn tại không
+            if (!hotelRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy khách sạn để xóa!");
+                return response;
+            }
+
+            // Thực hiện xóa
+            hotelRepository.deleteById(id);
+
+            response.put("success", true);
+            response.put("message", "Đã xóa khách sạn và các phòng liên quan thành công!");
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            response.put("success", false);
+            response.put("message", "Lỗi khi xóa khách sạn: " + e.getMessage());
+        }
         return response;
     }
 }

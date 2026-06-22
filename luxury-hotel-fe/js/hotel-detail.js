@@ -8,16 +8,27 @@ if (!userStr) {
 const currentUser = JSON.parse(userStr);
 
 // ==========================================
-// 2. LẤY PARAMS TỪ URL
+// 2. LẤY PARAMS TỪ URL VÀ XỬ LÝ MẶC ĐỊNH
 // ==========================================
 const urlParams = new URLSearchParams(window.location.search);
 const hotelId = urlParams.get('id');
-const queryCheckIn = urlParams.get('checkIn');   
-const queryCheckOut = urlParams.get('checkOut'); 
+let queryCheckIn = urlParams.get('checkIn');   
+let queryCheckOut = urlParams.get('checkOut'); 
 
 if (!hotelId) {
     alert("Lỗi: Không xác định được khách sạn!");
     window.location.href = 'customer-dashboard.html';
+}
+
+// FIX: Tự động gán ngày Hôm nay -> Ngày mai nếu URL trống, 
+// để API luôn có ngày gửi xuống Backend tính toán phòng trống.
+if (!queryCheckIn || !queryCheckOut) {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    queryCheckIn = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    queryCheckOut = tomorrow.getFullYear() + '-' + String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + String(tomorrow.getDate()).padStart(2, '0');
 }
 
 // 3. Tải dữ liệu Khách sạn
@@ -26,10 +37,8 @@ let selectedRoom = null;
 
 async function fetchHotelDetails() {
     try {
-        let fetchUrl = `http://localhost:8080/api/hotels/${hotelId}`;
-        if (queryCheckIn && queryCheckOut) {
-            fetchUrl += `?checkIn=${queryCheckIn}&checkOut=${queryCheckOut}`;
-        }
+        // Lúc này queryCheckIn và queryCheckOut chắc chắn đã có dữ liệu
+        let fetchUrl = `http://localhost:8080/api/hotels/${hotelId}?checkIn=${queryCheckIn}&checkOut=${queryCheckOut}`;
 
         const res = await fetch(fetchUrl);
         const data = await res.json();
@@ -64,14 +73,24 @@ function renderRooms(rooms) {
     }
 
     rooms.forEach(room => {
+        // FIX BUG: Dùng ?? để lấy chính xác số 0, nếu dùng || thì số 0 sẽ bị coi là false và bị bỏ qua
+        const availableCount = room.availableQuantity ?? room.quantity;
+        const isSoldOut = availableCount <= 0;
+
         const card = document.createElement('div');
         card.className = 'room-card';
         card.innerHTML = `
             <h3>${room.name}</h3>
             <p style="margin-bottom: 5px; color: #475569;">👥 Sức chứa: ${room.capacity} người</p>
-            <p style="margin-bottom: 10px; color: #059669; font-weight: 600;">✅ Còn trống: ${room.availableQuantity || room.quantity || 0} phòng</p>
+            <p style="margin-bottom: 10px; color: ${isSoldOut ? '#dc2626' : '#059669'}; font-weight: 600;">
+                ${isSoldOut ? '❌ Đã hết phòng' : `✅ Còn trống: ${availableCount} phòng`}
+            </p>
             <div class="room-price">${room.price.toLocaleString('vi-VN')} VNĐ/đêm</div>
-            <button class="btn btn-primary btn-full" onclick="openBookingModal(${room.id})">Đặt Phòng Này</button>
+            
+            <button class="btn btn-primary btn-full" 
+                ${isSoldOut ? 'disabled style="background: #94a3b8; cursor: not-allowed;"' : `onclick="openBookingModal(${room.id})"`}>
+                ${isSoldOut ? 'Hết Phòng' : 'Đặt Phòng Này'}
+            </button>
         `;
         container.appendChild(card);
     });
@@ -100,22 +119,11 @@ window.openBookingModal = async (roomId) => {
     document.getElementById('m-room-name').innerText = selectedRoom.name;
     document.getElementById('m-room-price').innerText = selectedRoom.price.toLocaleString('vi-VN');
 
-    // Tự động gán ngày từ URL
+    // Dữ liệu ngày đã được xử lý chắc chắn có ở Bước 2
     selectedCheckIn = queryCheckIn;
     selectedCheckOut = queryCheckOut;
 
-    // Fallback: Nếu khách vào trang mà URL rỗng ngày, tự động gán Hôm nay -> Ngày mai
-    if (!selectedCheckIn || !selectedCheckOut) {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        // Format chuẩn YYYY-MM-DD
-        selectedCheckIn = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-        selectedCheckOut = tomorrow.getFullYear() + '-' + String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + String(tomorrow.getDate()).padStart(2, '0');
-    }
-
-    // Hiển thị lên UI Modal (khung read-only)
+    // Hiển thị lên UI Modal
     document.getElementById('display-dates').innerText = `${selectedCheckIn} đến ${selectedCheckOut}`;
 
     // Tính số đêm
@@ -252,7 +260,7 @@ document.getElementById('btnConfirmPayment').addEventListener('click', async () 
                 originalPrice: baseTotal,        
                 totalPaid: finalPrice,           
                 depositAmount: amountToPay,      
-                checkInDate: selectedCheckIn,    // Gửi thẳng ngày đã lưu lên server
+                checkInDate: selectedCheckIn,    
                 checkOutDate: selectedCheckOut
             })
         });

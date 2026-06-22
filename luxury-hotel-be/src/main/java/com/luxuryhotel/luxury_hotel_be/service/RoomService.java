@@ -1,12 +1,18 @@
 package com.luxuryhotel.luxury_hotel_be.service;
 
+import com.luxuryhotel.luxury_hotel_be.dto.AdminRoomDto;
 import com.luxuryhotel.luxury_hotel_be.dto.BookedDateDto;
 import com.luxuryhotel.luxury_hotel_be.dto.RoomDto;
+import com.luxuryhotel.luxury_hotel_be.dto.RoomRequest;
+import com.luxuryhotel.luxury_hotel_be.entity.Hotel;
 import com.luxuryhotel.luxury_hotel_be.entity.Room;
 import com.luxuryhotel.luxury_hotel_be.repository.BookingRepository;
+import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,6 +26,9 @@ public class RoomService {
 
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private HotelRepository hotelRepository;
 
     @Autowired
     private BookingRepository bookingRepository;
@@ -110,5 +119,77 @@ public class RoomService {
         result.add(lastDto);
 
         return result;
+    }
+
+    // 1. Hàm THÊM MỚI phòng
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> createRoom(RoomRequest request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // Tìm khách sạn chủ quản
+            Hotel hotel = hotelRepository.findById(request.getHotelId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khách sạn này!"));
+
+            Room room = new Room();
+            room.setHotel(hotel);
+            room.setRoomType(request.getRoomType());
+            room.setCapacity(request.getCapacity());
+            room.setDefaultPrice(request.getPrice());
+
+            // LƯU Ý: Ở admin.js em chưa có ô nhập "Số lượng phòng" (Quantity),
+            // nên anh tạm set mặc định là 5 phòng để không bị lỗi Database (NOT NULL)
+            room.setQuantity(5);
+
+            roomRepository.save(room);
+
+            response.put("success", true);
+            response.put("message", "Thêm phòng mới thành công!");
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            response.put("success", false);
+            response.put("message", "Lỗi khi thêm phòng: " + e.getMessage());
+        }
+        return response;
+    }
+
+    // 2. Hàm SỬA thông tin phòng
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> updateRoom(Integer id, RoomRequest request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Room room = roomRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng có ID: " + id));
+
+            Hotel hotel = hotelRepository.findById(request.getHotelId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khách sạn!"));
+
+            room.setHotel(hotel);
+            room.setRoomType(request.getRoomType());
+            room.setCapacity(request.getCapacity());
+            room.setDefaultPrice(request.getPrice());
+
+            roomRepository.save(room);
+
+            response.put("success", true);
+            response.put("message", "Cập nhật phòng thành công!");
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            response.put("success", false);
+            response.put("message", "Lỗi khi cập nhật phòng: " + e.getMessage());
+        }
+        return response;
+    }
+
+    // Hàm lấy danh sách phòng theo ID Khách sạn cho Admin
+    public List<AdminRoomDto> getRoomsByHotelId(Integer hotelId) {
+        return roomRepository.findByHotel_HotelId(hotelId).stream().map(room -> {
+            AdminRoomDto dto = new AdminRoomDto();
+            dto.setRoomID(room.getRoomId());
+            dto.setRoomType(room.getRoomType());
+            dto.setCapacity(room.getCapacity());
+            dto.setDefaultPrice(room.getDefaultPrice());
+            return dto;
+        }).collect(Collectors.toList());
+
     }
 }
