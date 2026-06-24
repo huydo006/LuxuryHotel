@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-LuxuryHotelBeApplication<luxury-hotel-be>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.luxuryhotel.luxury_hotel_be.LuxuryHotelBeApplication",
+            "projectName": "luxury-hotel-be",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
