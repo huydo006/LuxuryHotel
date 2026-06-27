@@ -20,16 +20,13 @@ public interface BookingDetailRepository extends JpaRepository<BookingDetail, In
                      "ORDER BY b.createdAt DESC")
        List<BookingDetail> findHistoryByAccountId(@Param("accountId") Integer accountId);
 
-       // Thêm hàm này vào dưới hàm findHistoryByAccountId cũ
-       @Query("SELECT bd FROM BookingDetail bd " +
-                     "JOIN FETCH bd.booking b " +
-                     "JOIN FETCH b.account a " + // JOIN thêm bảng Account để lấy username
-                     "JOIN FETCH bd.room r " +
-                     "JOIN FETCH r.hotel h " +
-                     "ORDER BY b.createdAt DESC")
-       List<BookingDetail> findAllBookingsForAdmin();
-
-       // BookingDetailRepository.java
-       @Query("SELECT bd FROM BookingDetail bd WHERE bd.booking.bookingId = :bookingId")
-       Optional<BookingDetail> findByBookingId(@Param("bookingId") Integer bookingId);
+    // Thêm hàm này vào dưới hàm findHistoryByAccountId cũ
+    @Query("SELECT bd FROM BookingDetail bd " +
+           "JOIN FETCH bd.booking b " +
+           "JOIN FETCH b.account a " + // JOIN thêm bảng Account để lấy username
+           "JOIN FETCH bd.room r " +
+           "JOIN FETCH r.hotel h " +
+           "ORDER BY b.createdAt DESC")
+    List<BookingDetail> findAllBookingsForAdmin();
+    List<BookingDetail> findByBooking_BookingId(Integer bookingId);
 }

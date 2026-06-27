@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,49 +19,224 @@
             --gold: #d4af37;
         }
 
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
-        body { display: flex; height: 100vh; background-color: var(--slate-50); color: var(--slate-800); overflow: hidden; }
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--slate-50);
+            color: var(--slate-800);
+            overflow: hidden;
+        }
 
         /* SIDEBAR CHUYÊN NGHIỆP */
-        .sidebar { width: 260px; background-color: var(--slate-900); color: white; display: flex; flex-direction: column; border-right: 1px solid var(--slate-800); }
-        .sidebar-header { padding: 24px 20px; text-align: center; font-size: 1.25rem; font-weight: 800; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); letter-spacing: 2px;}
-        .sidebar-header span { color: var(--gold); }
-        
-        .menu { flex: 1; padding: 20px 0; overflow-y: auto; }
-        .menu-item { padding: 14px 24px; display: flex; align-items: center; gap: 12px; color: #94a3b8; cursor: pointer; transition: all 0.2s ease; font-weight: 500; font-size: 0.95rem; border-left: 3px solid transparent;}
-        .menu-item:hover { color: white; background-color: rgba(255,255,255,0.03); }
-        .menu-item.active { background-color: rgba(255,255,255,0.05); color: white; border-left-color: var(--gold); font-weight: 600; }
-        
+        .sidebar {
+            width: 260px;
+            background-color: var(--slate-900);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--slate-800);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            letter-spacing: 2px;
+        }
+
+        .sidebar-header span {
+            color: var(--gold);
+        }
+
+        .menu {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            border-left: 3px solid transparent;
+        }
+
+        .menu-item:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-left-color: var(--gold);
+            font-weight: 600;
+        }
+
         /* KHU VỰC NỘI DUNG CHÍNH */
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
         /* TOPBAR TỐI GIẢN */
-        .topbar { background: white; padding: 16px 32px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--slate-200); z-index: 10; }
-        .admin-info { display: flex; align-items: center; gap: 20px; font-size: 0.95rem; }
-        #admin-name { font-weight: 600; color: var(--slate-700); }
-        .btn-logout { background: transparent; color: var(--slate-600); border: 1px solid var(--slate-200); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: 0.2s; }
-        .btn-logout:hover { background: var(--slate-50); color: #ef4444; border-color: #fca5a5; }
+        .topbar {
+            background: white;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            border-bottom: 1px solid var(--slate-200);
+            z-index: 10;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 0.95rem;
+        }
+
+        #admin-name {
+            font-weight: 600;
+            color: var(--slate-700);
+        }
+
+        .btn-logout {
+            background: transparent;
+            color: var(--slate-600);
+            border: 1px solid var(--slate-200);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: var(--slate-50);
+            color: #ef4444;
+            border-color: #fca5a5;
+        }
 
         /* KHU VỰC CHUYỂN TAB */
-        .content-area { padding: 32px; overflow-y: auto; flex: 1; }
-        .tab-content { display: none; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .content-area {
+            padding: 32px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         /* CARD CHỨA BẢNG DỮ LIỆU */
-        .card { background: white; border-radius: 12px; border: 1px solid var(--slate-200); box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
-        .card-header { padding: 20px 24px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; background: #fff; gap: 15px;}
-        .card-header h2 { font-size: 1.15rem; font-weight: 600; color: var(--slate-800); white-space: nowrap;}
-        
-        /* Header Actions (Cho các nút và ô tìm kiếm nằm cùng dòng) */
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-        
-        .search-input { padding: 9px 12px; border: 1px solid var(--slate-300); border-radius: 6px; outline: none; font-size: 0.9rem; width: 250px; transition: 0.2s; color: var(--slate-800); }
-        .search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
 
-        .btn-add { background: var(--slate-800); color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.2s; white-space: nowrap;}
-        .btn-add:hover:not(:disabled) { background: var(--slate-900); box-shadow: 0 4px 12px rgba(15,23,42,0.15); }
-        .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            gap: 15px;
+        }
+
+        .card-header h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--slate-800);
+            white-space: nowrap;
+        }
+
+        /* Header Actions (Cho các nút và ô tìm kiếm nằm cùng dòng) */
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 9px 12px;
+            border: 1px solid var(--slate-300);
+            border-radius: 6px;
+            outline: none;
+            font-size: 0.9rem;
+            width: 250px;
+            transition: 0.2s;
+            color: var(--slate-800);
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-add {
+            background: var(--slate-800);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover:not(:disabled) {
+            background: var(--slate-900);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
+
+        .btn-add:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
         /* --- CUSTOM DROPDOWN (SELECT) CHUYÊN NGHIỆP --- */
         .custom-select {
@@ -78,62 +254,282 @@
             width: 100%;
             max-width: 350px;
             transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
             background-repeat: no-repeat;
             background-position: right 14px center;
             background-size: 16px;
         }
-        .custom-select:hover { border-color: #94a3b8; }
+
+        .custom-select:hover {
+            border-color: #94a3b8;
+        }
+
         .custom-select:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
         /* BẢNG DỮ LIỆU (TABLE) - CLEAN DESIGN */
-        table { width: 100%; border-collapse: collapse; }
-        th { padding: 14px 24px; text-align: left; background: #f8fafc; font-size: 0.75rem; text-transform: uppercase; color: var(--slate-600); font-weight: 600; letter-spacing: 0.05em; border-bottom: 1px solid var(--slate-200); }
-        td { padding: 16px 24px; font-size: 0.9rem; color: var(--slate-700); border-bottom: 1px solid var(--slate-100); vertical-align: middle; line-height: 1.5; }
-        tbody tr { transition: background-color 0.15s; }
-        tbody tr:hover { background-color: var(--slate-50); }
-        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 14px 24px;
+            text-align: left;
+            background: #f8fafc;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--slate-600);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        td {
+            padding: 16px 24px;
+            font-size: 0.9rem;
+            color: var(--slate-700);
+            border-bottom: 1px solid var(--slate-100);
+            vertical-align: middle;
+            line-height: 1.5;
+        }
+
+        tbody tr {
+            transition: background-color 0.15s;
+        }
+
+        tbody tr:hover {
+            background-color: var(--slate-50);
+        }
+
         /* NÚT THAO TÁC (GHOST BUTTONS) */
-        .action-btns { display: flex; gap: 8px; }
-        .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s; background: transparent; }
-        
-        .btn-approve { border: 1px solid #10b981; color: #10b981; }
-        .btn-approve:hover:not(:disabled) { background: #10b981; color: white; }
-        
-        .btn-delete, .btn-cancel { border: 1px solid #ef4444; color: #ef4444; }
-        .btn-delete:hover:not(:disabled), .btn-cancel:hover:not(:disabled) { background: #ef4444; color: white; }
-        
-        .btn-edit { border: 1px solid #3b82f6; color: #3b82f6; }
-        .btn-edit:hover:not(:disabled) { background: #3b82f6; color: white; }
-        
-        .btn-sm:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--slate-200); color: var(--slate-300); background: var(--slate-50); }
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .btn-approve {
+            border: 1px solid #10b981;
+            color: #10b981;
+        }
+
+        .btn-approve:hover:not(:disabled) {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-delete,
+        .btn-cancel {
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .btn-delete:hover:not(:disabled),
+        .btn-cancel:hover:not(:disabled) {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-edit {
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .btn-edit:hover:not(:disabled) {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-sm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: var(--slate-200);
+            color: var(--slate-300);
+            background: var(--slate-50);
+        }
 
         /* STATUS BADGES (PASTEL COLORS) */
-        .status { padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: inline-block; letter-spacing: 0.3px;}
-        .status.processing { background: #fef9c3; color: #a16207; }
-        .status.success { background: #dcfce7; color: #166534; }
-        .status.cancelled { background: #f1f5f9; color: var(--slate-600); }
+        .status {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            letter-spacing: 0.3px;
+        }
+
+        .status.processing {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status.cancelled {
+            background: #f1f5f9;
+            color: var(--slate-600);
+        }
 
         /* MODAL DÙNG CHUNG */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.2s; backdrop-filter: blur(2px); }
-        .modal.active { opacity: 1; pointer-events: all; }
-        .modal-content { background: white; width: 500px; border-radius: 12px; padding: 32px; transform: scale(0.95); transition: 0.2s; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .modal.active .modal-content { transform: scale(1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .modal-header h2 { font-size: 1.25rem; color: var(--slate-800); }
-        
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--slate-700); }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--slate-300); border-radius: 6px; outline: none; font-size: 0.9rem; color: var(--slate-800); transition: 0.2s;}
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        .form-group input:disabled { background-color: var(--slate-100); color: var(--slate-600); cursor: not-allowed; }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.2s;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: white; 
+            width: 600px; /* Rộng rãi hơn để chứa thẻ */
+            border-radius: 16px; 
+            padding: 35px; 
+            transform: scale(0.95); 
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            max-height: 85vh; /* Giới hạn chiều cao 85% màn hình */
+            overflow-y: auto; /* Tự động có thanh cuộn nếu form dài */
+        }
+
+        .modal-content::-webkit-scrollbar { width: 5px; }
+        .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .modal-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            color: var(--slate-800);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--slate-700);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--slate-300);
+            border-radius: 6px;
+            outline: none;
+            font-size: 0.9rem;
+            color: var(--slate-800);
+            transition: 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group input:disabled {
+            background-color: var(--slate-100);
+            color: var(--slate-600);
+            cursor: not-allowed;
+        }
+
+        #h-amenities-checkboxes {
+            display: flex;
+            flex-wrap: wrap; /* Tự động rớt dòng nếu nhiều thẻ */
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .amenity-checkbox-label {
+            cursor: pointer;
+            display: inline-block;
+            margin: 0 !important;
+        }
+
+        /* Ẩn triệt để ô vuông checkbox xấu xí đi */
+        .amenity-checkbox-label input[type="checkbox"] {
+            display: none !important;
+        }
+
+        /* Thiết kế hình dáng của Thẻ (Lúc chưa chọn) */
+        .amenity-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 18px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 30px; /* Bo tròn hoàn toàn */
+            color: #475569;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            user-select: none;
+        }
+
+        /* Hiệu ứng khi lướt chuột qua */
+        .amenity-checkbox-label:hover .amenity-chip {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        /* Hiệu ứng ĐỔI MÀU khi thẻ ĐƯỢC CHỌN (Checked) */
+        .amenity-checkbox-label input[type="checkbox"]:checked + .amenity-chip {
+            background: var(--slate-900); /* Nền đen bóng */
+            color: var(--gold); /* Chữ vàng Luxury */
+            border-color: var(--slate-900);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); /* Đổ bóng nổi bật */
+            transform: translateY(-2px); /* Hơi nảy lên một chút */
+        }
     </style>
 </head>
+
 <body>
 
     <div class="sidebar">
@@ -156,7 +552,7 @@
         </div>
 
         <div class="content-area">
-            
+
             <div id="tab-bookings" class="tab-content active">
                 <div class="card">
                     <div class="card-header">
@@ -175,7 +571,9 @@
                             </tr>
                         </thead>
                         <tbody id="booking-list">
-                            <tr><td colspan="7" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+                            <tr>
+                                <td colspan="7" style="text-align: center;">Đang tải dữ liệu...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -199,7 +597,9 @@
                             </tr>
                         </thead>
                         <tbody id="hotel-list">
-                            <tr><td colspan="6" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+                            <tr>
+                                <td colspan="6" style="text-align: center;">Đang tải dữ liệu...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -212,7 +612,8 @@
                         <select id="room-hotel-select" class="custom-select" onchange="loadRoomsForSelectedHotel()">
                             <option value="">-- Vui lòng chọn khách sạn --</option>
                         </select>
-                        <button class="btn-add" id="btn-add-room" onclick="openRoomModal()" disabled>+ Thêm phòng mới</button>
+                        <button class="btn-add" id="btn-add-room" onclick="openRoomModal()" disabled>+ Thêm phòng
+                            mới</button>
                     </div>
                     <table>
                         <thead>
@@ -220,12 +621,16 @@
                                 <th>ID</th>
                                 <th>Loại phòng / Tiện ích</th>
                                 <th>Sức chứa</th>
+                                <th>Số lượng</th>
                                 <th>Giá (VNĐ/đêm)</th>
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="room-list-admin">
-                            <tr><td colspan="5" style="text-align: center; color: #64748b;">Vui lòng chọn khách sạn ở trên để xem danh sách phòng.</td></tr>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #64748b;">Vui lòng chọn khách sạn ở
+                                    trên để xem danh sách phòng.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -236,7 +641,8 @@
                     <div class="card-header">
                         <h2>Danh sách khách hàng</h2>
                         <div class="header-actions">
-                            <input type="text" id="search-customer" class="search-input" placeholder="Tìm theo tên, email..." onkeyup="handleSearchCustomer(event)">
+                            <input type="text" id="search-customer" class="search-input"
+                                placeholder="Tìm theo tên, email..." onkeyup="handleSearchCustomer(event)">
                             <button class="btn-add" onclick="openCustomerModal()">+ Thêm khách hàng</button>
                         </div>
                     </div>
@@ -251,7 +657,9 @@
                             </tr>
                         </thead>
                         <tbody id="customer-list-admin">
-                            <tr><td colspan="5" style="text-align: center; color: #64748b;">Đang tải dữ liệu...</td></tr>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #64748b;">Đang tải dữ liệu...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -275,7 +683,9 @@
                             </tr>
                         </thead>
                         <tbody id="promo-list-admin">
-                            <tr><td colspan="6" style="text-align: center; color: #64748b;">Đang tải dữ liệu...</td></tr>
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #64748b;">Đang tải dữ liệu...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -288,7 +698,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="hotelModalTitle">Thêm khách sạn</h2>
-                <button onclick="closeHotelModal()" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+                <button onclick="closeHotelModal()"
+                    style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
             </div>
             <input type="hidden" id="h-id">
             <div class="form-group">
@@ -307,6 +718,13 @@
                 <label>Mô tả chi tiết</label>
                 <textarea id="h-desc" rows="4"></textarea>
             </div>
+            <div class="form-group">
+                <label>Tiện ích có sẵn (Tích để chọn)</label>
+                <div id="h-amenities-checkboxes"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                    <span style="color: #64748b; font-style: italic;">Đang tải danh sách tiện ích...</span>
+                </div>
+            </div>
             <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="saveHotel()">Lưu thông tin</button>
         </div>
     </div>
@@ -315,7 +733,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="roomModalTitle">Thêm Phòng Mới</h2>
-                <button onclick="closeRoomModal()" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+                <button onclick="closeRoomModal()"
+                    style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
             </div>
             <input type="hidden" id="r-id">
             <div class="form-group">
@@ -327,10 +746,15 @@
                 <input type="number" id="r-capacity" placeholder="VD: 2">
             </div>
             <div class="form-group">
+                <label>Tổng số lượng phòng</label>
+                <input type="number" id="r-quantity" placeholder="VD: 10">
+            </div>
+            <div class="form-group">
                 <label>Giá Phòng (VNĐ/đêm)</label>
                 <input type="text" id="r-price" placeholder="VD: 1500000">
             </div>
-            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="saveRoom()">Lưu Thông Tin Phòng</button>
+            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="saveRoom()">Lưu Thông Tin
+                Phòng</button>
         </div>
     </div>
 
@@ -338,10 +762,11 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="customerModalTitle">Thêm Khách Hàng</h2>
-                <button onclick="closeCustomerModal()" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+                <button onclick="closeCustomerModal()"
+                    style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
             </div>
             <input type="hidden" id="c-id">
-            
+
             <div class="form-group">
                 <label>Họ và Tên</label>
                 <input type="text" id="c-fullname" placeholder="VD: Nguyễn Văn A">
@@ -359,7 +784,8 @@
                 <input type="password" id="c-password" placeholder="********">
             </div>
 
-            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="saveCustomer()">Lưu thông tin</button>
+            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="saveCustomer()">Lưu thông
+                tin</button>
         </div>
     </div>
 
@@ -367,9 +793,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Tạo Chương Trình Khuyến Mãi</h2>
-                <button onclick="closePromoModal()" style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
+                <button onclick="closePromoModal()"
+                    style="background:none; border:none; font-size:1.5rem; color:#64748b; cursor:pointer;">&times;</button>
             </div>
-            
+
             <div class="form-group">
                 <label>Mã Khuyến Mãi (Code)</label>
                 <input type="text" id="p-code" placeholder="VD: SUMMER26" style="text-transform: uppercase;">
@@ -409,10 +836,12 @@
                 </div>
             </div>
 
-            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="savePromo()">Kích hoạt khuyến mãi</button>
+            <button class="btn-add" style="width:100%; margin-top: 10px;" onclick="savePromo()">Kích hoạt khuyến
+                mãi</button>
         </div>
     </div>
 
     <script type="module" src="./js/admin.js"></script>
 </body>
+
 </html>

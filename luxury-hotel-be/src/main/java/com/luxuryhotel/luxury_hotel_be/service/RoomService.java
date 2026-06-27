@@ -136,9 +136,7 @@ public class RoomService {
             room.setCapacity(request.getCapacity());
             room.setDefaultPrice(request.getPrice());
 
-            // LƯU Ý: Ở admin.js em chưa có ô nhập "Số lượng phòng" (Quantity),
-            // nên anh tạm set mặc định là 5 phòng để không bị lỗi Database (NOT NULL)
-            room.setQuantity(5);
+            room.setQuantity(request.getQuantity());
 
             roomRepository.save(room);
 
@@ -167,6 +165,7 @@ public class RoomService {
             room.setRoomType(request.getRoomType());
             room.setCapacity(request.getCapacity());
             room.setDefaultPrice(request.getPrice());
+            room.setQuantity(request.getQuantity());
 
             roomRepository.save(room);
 
@@ -208,6 +207,7 @@ public class RoomService {
             dto.setRoomType(room.getRoomType());
             dto.setCapacity(room.getCapacity());
             dto.setDefaultPrice(room.getDefaultPrice());
+            dto.setQuantity(room.getQuantity());
             return dto;
         }).collect(Collectors.toList());
 

@@ -1,4 +1,5 @@
 package com.luxuryhotel.luxury_hotel_be.service;
+import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import com.luxuryhotel.luxury_hotel_be.dto.BookingRequest;
 import com.luxuryhotel.luxury_hotel_be.entity.Account;
 import com.luxuryhotel.luxury_hotel_be.entity.Booking;
 import com.luxuryhotel.luxury_hotel_be.entity.BookingDetail;
+import com.luxuryhotel.luxury_hotel_be.entity.Hotel;
 import com.luxuryhotel.luxury_hotel_be.entity.Promotion;
 import com.luxuryhotel.luxury_hotel_be.entity.Room;
 import com.luxuryhotel.luxury_hotel_be.repository.AccountRepository;
@@ -34,7 +36,9 @@ public class BookingService {
     private final BookingDetailRepository bookingDetailRepository;
     private final RoomRepository roomRepository;
     private final AccountRepository accountRepository;
-    private final PromotionRepository promotionRepository;
+    private final PromotionRepository promotionRepository; // Thêm Repo Khuyến mãi
+    private final HotelRepository hotelRepository;
+    
     private final EmailService emailService;
 
     @Transactional(rollbackFor = Exception.class)
@@ -192,34 +196,23 @@ public class BookingService {
             booking.setStatus(statusEnum);
             bookingRepository.save(booking);
 
+            // ==========================================
+            // LOGIC MỚI: CHỈ TĂNG LƯỢT ĐẶT KHI ADMIN DUYỆT (SUCCESS)
+            // ==========================================
             if (statusEnum == Booking.Status.success) {
-                try {
-                    // Chỉ query đúng 1 BookingDetail theo bookingId, không load toàn bộ
-                    BookingDetail detail = bookingDetailRepository.findByBookingId(bookingId)
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết đặt phòng!"));
-
-                    String hotelName = detail.getRoom().getHotel().getNameHotel();
-                    String hotelAddress = detail.getRoom().getHotel().getAddress(); // thêm getter nếu chưa có
-                    String totalPaid = String.valueOf(booking.getTotalPrice());
-
-                    emailService.sendBookingConfirmationEmail(
-                            booking.getAccount().getEmail(),
-                            booking.getAccount().getFullName() != null
-                                    ? booking.getAccount().getFullName()
-                                    : booking.getAccount().getUsername(),
-                            hotelName,
-                            booking.getCheckInDate().toString(),
-                            booking.getCheckOutDate().toString(),
-                            bookingId.toString(), // ← tham số mới
-                            totalPaid, // ← tham số mới
-                            hotelAddress // ← tham số mới
-                    );
-                    System.out.println("Đã gửi email xác nhận thành công cho booking #" + bookingId);
-                } catch (Exception e) {
-                    // Email lỗi không rollback transaction — đơn vẫn được duyệt
-                    System.err.println("Lỗi gửi mail nhưng đơn đã được duyệt: " + e.getMessage());
+                // Lấy chi tiết đơn để dò ra khách sạn
+                List<BookingDetail> details = bookingDetailRepository.findByBooking_BookingId(bookingId);
+                
+                if (!details.isEmpty()) {
+                    Hotel hotel = details.get(0).getRoom().getHotel();
+                    int currentCount = hotel.getBookingsCount() != null ? hotel.getBookingsCount() : 0;
+                    hotel.setBookingsCount(currentCount + 1);
+                    
+                    // Lưu lại số lượt đặt mới vào Database
+                    hotelRepository.save(hotel);
                 }
             }
+            // ==========================================
 
             response.put("success", true);
             response.put("message", "Đã cập nhật trạng thái đơn hàng thành công!");
