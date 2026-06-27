@@ -1,8 +1,8 @@
 package com.luxuryhotel.luxury_hotel_be.controller;
 
+import com.luxuryhotel.luxury_hotel_be.dto.PromotionDto;
 import com.luxuryhotel.luxury_hotel_be.dto.PromotionRequest;
-import com.luxuryhotel.luxury_hotel_be.entity.Promotion;
-import com.luxuryhotel.luxury_hotel_be.service.AdminPromotionService;
+import com.luxuryhotel.luxury_hotel_be.service.PromotionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +16,10 @@ import java.util.Map;
 public class AdminPromotionController {
 
     @Autowired
-    private AdminPromotionService promotionService;
+    private PromotionService promotionService;
 
     @GetMapping
-    public ResponseEntity<List<Promotion>> getAllPromotions() {
+    public ResponseEntity<List<PromotionDto>> getAllPromotions() {
         return ResponseEntity.ok(promotionService.getAllPromotions());
     }
 
@@ -29,8 +29,8 @@ public class AdminPromotionController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<Map<String, Object>> toggleStatus(@PathVariable Integer id, @RequestBody Map<String, Integer> body) {
-        return ResponseEntity.ok(promotionService.togglePromotionStatus(id, body.get("isValid")));
+    public ResponseEntity<Map<String, Object>> toggleStatus(@PathVariable Integer id, @RequestBody Map<String, Integer> request) {
+        return ResponseEntity.ok(promotionService.togglePromotionStatus(id, request));
     }
 
     @DeleteMapping("/{id}")
