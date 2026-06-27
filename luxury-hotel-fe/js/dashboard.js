@@ -77,9 +77,7 @@ function renderHotels(hotels, checkIn = "", checkOut = "") {
 // 4. CHỨC NĂNG TÌM KIẾM MỚI (Lấy dữ liệu từ Flatpickr)
 document.getElementById('btnSearch').addEventListener('click', async () => {
     const location = document.getElementById('locInput').value.trim();
-    const dateRange = document.getElementById('dateRange').value; // Ví dụ: "2026-06-19 to 2026-06-20"
-    
-    // --- LẤY GIÁ TRỊ TỪ Ô CHỌN SỨC CHỨA ---
+    const dateRange = document.getElementById('dateRange').value; 
     const capacityVal = document.getElementById('capacitySelect').value; 
 
     // Validate dữ liệu: CHỈ BẮT BUỘC ĐỊA ĐIỂM
@@ -88,19 +86,22 @@ document.getElementById('btnSearch').addEventListener('click', async () => {
         return;
     }
     
-    // Tách chuỗi ngày của Flatpickr thành checkIn và checkOut (nếu có)
+    // BẢN FIX: Hỗ trợ tách chuỗi ngày theo cả 2 ngôn ngữ (to / đến)
     let checkIn = "";
     let checkOut = "";
-    if (dateRange && dateRange.includes(' to ')) {
-        const dates = dateRange.split(' to ');
-        checkIn = dates[0].trim();
-        checkOut = dates[1].trim();
+    if (dateRange) {
+        const separator = dateRange.includes(' đến ') ? ' đến ' : (dateRange.includes(' to ') ? ' to ' : null);
+        if (separator) {
+            const dates = dateRange.split(separator);
+            checkIn = dates[0].trim();
+            checkOut = dates[1].trim();
+        }
     }
 
     try {
         hotelContainer.innerHTML = '<div class="empty-msg">Đang tìm kiếm...</div>';
         
-        // --- XÂY DỰNG URL ĐỘNG TÙY VÀO VIỆC CÓ CHỌN NGÀY HAY KHÔNG ---
+        // XÂY DỰNG URL ĐỘNG TÙY VÀO VIỆC CÓ CHỌN NGÀY HAY KHÔNG
         let url = `http://localhost:8080/api/hotels/search?location=${encodeURIComponent(location)}`;
         if (checkIn && checkOut) {
             url += `&checkIn=${checkIn}&checkOut=${checkOut}`;
@@ -109,11 +110,9 @@ document.getElementById('btnSearch').addEventListener('click', async () => {
         const response = await fetch(url);
         let resultHotels = await response.json();
         
-        // --- LOGIC LỌC THEO SỨC CHỨA ĐÃ ĐƯỢC THAY THẾ ---
+        // LOGIC LỌC THEO SỨC CHỨA
         if (capacityVal && capacityVal !== 'all' && resultHotels.length > 0) {
             const requiredCapacity = parseInt(capacityVal);
-            
-            // Chỉ giữ lại những khách sạn có phòng (maxCapacity) đáp ứng đủ số lượng người yêu cầu
             resultHotels = resultHotels.filter(h => h.maxCapacity >= requiredCapacity);
         }
         
