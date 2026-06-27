@@ -7,6 +7,7 @@ import com.luxuryhotel.luxury_hotel_be.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,13 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> createBooking(@RequestBody BookingRequest request) {
-        Map<String, Object> response = bookingService.createBooking(request);
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<Map<String, Object>> createBooking(
+            @RequestPart("booking") BookingRequest request,
+            @RequestPart(value = "receipt", required = false) MultipartFile receipt) {
+        
+        // Truyền thêm receipt xuống Service
+        Map<String, Object> response = bookingService.createBooking(request, receipt);
         
         if ((Boolean) response.get("success")) {
             return ResponseEntity.ok(response);

@@ -54,4 +54,7 @@ public class Booking {
     public enum Status {
         processing, success, cancelled
     }
+
+    @Column(name = "paymentReceipt")
+    private String paymentReceipt;
 }

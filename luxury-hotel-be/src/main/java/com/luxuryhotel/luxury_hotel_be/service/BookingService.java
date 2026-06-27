@@ -1,4 +1,5 @@
 package com.luxuryhotel.luxury_hotel_be.service;
+
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,12 @@ import com.luxuryhotel.luxury_hotel_be.repository.BookingRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.PromotionRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,17 +38,20 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BookingService {
 
+    @Value("${app.upload-dir:uploads/receipts}")
+    private String receiptUploadDir;
+
     private final BookingRepository bookingRepository;
     private final BookingDetailRepository bookingDetailRepository;
     private final RoomRepository roomRepository;
     private final AccountRepository accountRepository;
     private final PromotionRepository promotionRepository; // Thêm Repo Khuyến mãi
     private final HotelRepository hotelRepository;
-    
+
     private final EmailService emailService;
 
     @Transactional(rollbackFor = Exception.class)
-    public Map<String, Object> createBooking(BookingRequest request) {
+    public Map<String, Object> createBooking(BookingRequest request, MultipartFile receipt) {
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -86,6 +96,18 @@ public class BookingService {
             booking.setCheckInDate(request.getCheckInDate());
             booking.setCheckOutDate(request.getCheckOutDate());
             booking.setStatus(Booking.Status.processing);
+
+            // LƯU ẢNH BIÊN LAI (NẾU CÓ)
+            if (receipt != null && !receipt.isEmpty()) {
+                Path dir = Paths.get(receiptUploadDir);
+                Files.createDirectories(dir);
+                String extension = receipt.getOriginalFilename().substring(receipt.getOriginalFilename().lastIndexOf('.'));
+                String fileName = UUID.randomUUID() + extension;
+                Path target = dir.resolve(fileName);
+                Files.copy(receipt.getInputStream(), target);
+                
+                booking.setPaymentReceipt("receipts/" + fileName); // Lưu đường dẫn vào DB
+            }
 
             if (request.getPromotionId() != null) {
                 Promotion promotion = promotionRepository.findById(request.getPromotionId())
@@ -178,6 +200,7 @@ public class BookingService {
             dto.setCheckOutDate(bd.getBooking().getCheckOutDate());
             dto.setTotalPrice(bd.getBooking().getTotalPrice());
             dto.setStatus(bd.getBooking().getStatus().name());
+            dto.setPaymentReceipt(bd.getBooking().getPaymentReceipt());
             return dto;
         }).collect(Collectors.toList());
     }
@@ -200,23 +223,23 @@ public class BookingService {
             if (statusEnum == Booking.Status.success) {
                 // Lấy chi tiết đơn để dò ra khách sạn
                 List<BookingDetail> details = bookingDetailRepository.findByBooking_BookingId(bookingId);
-                
+
                 if (!details.isEmpty()) {
                     Room room = details.get(0).getRoom();
                     Hotel hotel = room.getHotel();
-                    
+
                     int currentCount = hotel.getBookingsCount() != null ? hotel.getBookingsCount() : 0;
                     hotel.setBookingsCount(currentCount + 1);
-                    
+
                     // Lưu lại số lượt đặt mới vào Database
                     hotelRepository.save(hotel);
 
                     // THÊM LOGIC GỬI EMAIL TẠI ĐÂY
                     try {
                         Account account = booking.getAccount();
-                        // Lưu ý: Hãy sửa lại các hàm getEmail(), getFullName(), getAddress() 
+                        // Lưu ý: Hãy sửa lại các hàm getEmail(), getFullName(), getAddress()
                         // cho đúng với tên thuộc tính trong Entity Account và Hotel của bạn
-                        String toEmail = account.getEmail(); 
+                        String toEmail = account.getEmail();
                         String customerName = account.getUsername(); // hoặc getFullName()
                         String hotelName = hotel.getNameHotel();
                         String checkIn = booking.getCheckInDate().toString();
@@ -226,8 +249,7 @@ public class BookingService {
 
                         emailService.sendBookingConfirmationEmail(
                                 toEmail, customerName, hotelName, checkIn, checkOut,
-                                String.valueOf(booking.getBookingId()), totalPaid, hotelAddress
-                        );
+                                String.valueOf(booking.getBookingId()), totalPaid, hotelAddress);
                     } catch (Exception e) {
                         System.err.println("Lỗi khi gửi email xác nhận: " + e.getMessage());
                         // Có thể log lỗi ra nhưng không throw để tránh rollback việc duyệt đơn
@@ -245,5 +267,5 @@ public class BookingService {
         }
         return response;
     }
-    
+
 }

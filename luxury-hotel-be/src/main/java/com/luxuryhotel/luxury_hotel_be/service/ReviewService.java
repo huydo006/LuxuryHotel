@@ -109,12 +109,15 @@ public class ReviewService {
         if (originalName != null && originalName.contains(".")) {
             extension = originalName.substring(originalName.lastIndexOf('.'));
         }
-        String fileName = (originalName != null && !originalName.isBlank())
-                ? originalName
-                : UUID.randomUUID() + extension;
+        
+        // SỬA Ở ĐÂY: Luôn dùng UUID ngẫu nhiên để làm tên file, tránh trùng lặp 100%
+        String fileName = UUID.randomUUID().toString() + extension;
 
         Path target = dir.resolve(fileName);
-        Files.copy(file.getInputStream(), target);
+        
+        // Thêm StandardCopyOption.REPLACE_EXISTING để ghi đè an toàn
+        java.nio.file.Files.copy(file.getInputStream(), target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        
         return fileName;
     }
 }

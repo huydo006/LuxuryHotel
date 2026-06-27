@@ -160,10 +160,21 @@
             <textarea id="rv-comment" placeholder="Bạn cảm thấy thế nào về phòng ốc, dịch vụ và tiện nghi tại đây?"></textarea>
 
             <div class="upload-box">
-                <div>Đính kèm ảnh trải nghiệm của bạn</div>
-                <div style="font-size:0.85rem; color:#64748b; margin-top:6px;">Hỗ trợ: JPG, PNG. Tối đa nhiều ảnh.</div>
-                <input type="file" id="rv-images" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple>
-                <div class="preview-images" id="rv-preview"></div>
+                <div class="upload-area" style="margin-bottom: 20px;">
+                <label for="rv-images" style="display: block; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 25px 15px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#10b981'; this.style.background='#ecfdf5'" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'">
+                    <div id="rv-upload-placeholder">
+                        <svg width="40" height="40" fill="none" stroke="#64748b" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom: 8px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path>
+                        </svg>
+                        <p id="rv-upload-text" style="margin: 0; color: #334155; font-size: 0.95rem; font-weight: 600;">Nhấn vào đây để chọn ảnh</p>
+                        <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 0.85rem;">Hỗ trợ: JPG, PNG. Có thể chọn nhiều ảnh.</p>
+                    </div>
+                </label>
+                
+                <input type="file" id="rv-images" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple style="display: none;">
+                
+                <div class="preview-images" id="rv-preview" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
+            </div>
             </div>
             
             <div class="modal-btns">
