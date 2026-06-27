@@ -8,4 +8,5 @@ public class RoomRequest {
     private String roomType;
     private Integer capacity;
     private Double price;
+    private Integer quantity;
 }

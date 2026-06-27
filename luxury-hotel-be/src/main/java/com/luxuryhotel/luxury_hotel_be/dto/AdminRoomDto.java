@@ -8,4 +8,5 @@ public class AdminRoomDto {
     private String roomType;
     private Integer capacity;
     private Double defaultPrice;
+    private Integer quantity;
 }

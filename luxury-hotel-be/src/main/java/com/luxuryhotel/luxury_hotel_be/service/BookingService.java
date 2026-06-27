@@ -1,4 +1,5 @@
 package com.luxuryhotel.luxury_hotel_be.service;
+import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import com.luxuryhotel.luxury_hotel_be.dto.BookingRequest;
 import com.luxuryhotel.luxury_hotel_be.entity.Account;
 import com.luxuryhotel.luxury_hotel_be.entity.Booking;
 import com.luxuryhotel.luxury_hotel_be.entity.BookingDetail;
+import com.luxuryhotel.luxury_hotel_be.entity.Hotel;
 import com.luxuryhotel.luxury_hotel_be.entity.Promotion;
 import com.luxuryhotel.luxury_hotel_be.entity.Room;
 import com.luxuryhotel.luxury_hotel_be.repository.AccountRepository;
@@ -35,6 +37,7 @@ public class BookingService {
     private final RoomRepository roomRepository;
     private final AccountRepository accountRepository;
     private final PromotionRepository promotionRepository; // Thêm Repo Khuyến mãi
+    private final HotelRepository hotelRepository;
 
     // BẮT BUỘC DÙNG rollbackFor = Exception.class ĐỂ ĐẢM BẢO TOÀN VẸN DỮ LIỆU
     @Transactional(rollbackFor = Exception.class)
@@ -209,6 +212,24 @@ public class BookingService {
             booking.setStatus(statusEnum);
             
             bookingRepository.save(booking);
+
+            // ==========================================
+            // LOGIC MỚI: CHỈ TĂNG LƯỢT ĐẶT KHI ADMIN DUYỆT (SUCCESS)
+            // ==========================================
+            if (statusEnum == Booking.Status.success) {
+                // Lấy chi tiết đơn để dò ra khách sạn
+                List<BookingDetail> details = bookingDetailRepository.findByBooking_BookingId(bookingId);
+                
+                if (!details.isEmpty()) {
+                    Hotel hotel = details.get(0).getRoom().getHotel();
+                    int currentCount = hotel.getBookingsCount() != null ? hotel.getBookingsCount() : 0;
+                    hotel.setBookingsCount(currentCount + 1);
+                    
+                    // Lưu lại số lượt đặt mới vào Database
+                    hotelRepository.save(hotel);
+                }
+            }
+            // ==========================================
 
             response.put("success", true);
             response.put("message", "Đã cập nhật trạng thái đơn hàng thành công!");

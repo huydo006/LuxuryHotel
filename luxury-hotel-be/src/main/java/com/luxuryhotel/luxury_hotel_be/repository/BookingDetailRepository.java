@@ -27,4 +27,5 @@ public interface BookingDetailRepository extends JpaRepository<BookingDetail, In
            "JOIN FETCH r.hotel h " +
            "ORDER BY b.createdAt DESC")
     List<BookingDetail> findAllBookingsForAdmin();
+    List<BookingDetail> findByBooking_BookingId(Integer bookingId);
 }

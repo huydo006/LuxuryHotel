@@ -64,6 +64,20 @@ async function fetchHotelDetails() {
             document.getElementById('h-reviews-count').innerText = `Tuyệt vời (${hotel.bookingsCount || 0} lượt đặt)`;
             document.getElementById('hotel-desc').innerText = hotel.description;
 
+            // --- ĐOẠN MỚI THÊM: Xử lý hiển thị Tiện ích động ---
+            const amenitiesContainer = document.getElementById('h-amenities-list');
+            if (amenitiesContainer) {
+                amenitiesContainer.innerHTML = ''; // Xóa chữ "Đang tải" hoặc code HTML tĩnh cũ
+                if (hotel.amenities && hotel.amenities.length > 0) {
+                    hotel.amenities.forEach(am => {
+                        amenitiesContainer.innerHTML += `<span class="amenity-item">${am}</span>`;
+                    });
+                } else {
+                    amenitiesContainer.innerHTML = `<span class="amenity-item" style="color: #94a3b8; border-color: transparent;">Khách sạn đang cập nhật tiện ích...</span>`;
+                }
+            }
+            // ---------------------------------------------------
+
             renderRooms(rooms);
             renderReviews(reviews);
         } else {
