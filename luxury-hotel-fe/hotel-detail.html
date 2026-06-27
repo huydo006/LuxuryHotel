@@ -7,6 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/global.css"> 
     
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/vn.js"></script>
+
     <style>
         :root { --primary-color: #0f172a; --accent-color: #d4af37; }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
@@ -60,15 +64,25 @@
         .rating-box .score { font-size: 2.8rem; font-weight: 800; color: var(--accent-color); line-height: 1; margin-bottom: 5px; }
         .rating-box .text { color: #64748b; font-size: 0.95rem; font-weight: 500; }
 
+        /* THANH TÌM KIẾM ĐƯỢC GHIM */
+        .search-box {
+            display: flex; background: white; padding: 10px; border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08); align-items: center; border: 1px solid #e2e8f0;
+            position: sticky; top: 20px; z-index: 99;
+        }
+        .search-field { flex: 1; display: flex; align-items: center; padding: 12px 20px; transition: 0.2s; border-radius: 8px; cursor: pointer; }
+        .search-field:hover { background: #f8fafc; }
+        .field-icon { color: #94a3b8; margin-right: 15px; display: flex; align-items: center; justify-content: center; }
+        .field-content { flex: 1; }
+        .field-content label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+        .field-content input, .field-content select { width: 100%; border: none; outline: none; font-size: 0.95rem; font-weight: 600; color: var(--primary-color); background: transparent; padding: 0; cursor: pointer; }
+        .search-divider { width: 1px; height: 40px; background: #e2e8f0; margin: 0 5px; }
+        .btn-search { background-color: var(--primary-color); color: white; border: none; padding: 18px 30px; border-radius: 10px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-left: 10px; white-space: nowrap; }
+        .btn-search:hover { background-color: #1e293b; color: var(--accent-color); }
+
         /* GRID PHÒNG */
-        .room-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 50px; margin-bottom: 60px;
-        }
-        .room-card {
-            background: white; border-radius: 16px; padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
+        .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; margin-bottom: 60px; }
+        .room-card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; transition: transform 0.3s, box-shadow 0.3s; }
         .room-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .room-card h3 { color: var(--primary-color); margin-bottom: 15px; font-size: 1.4rem; }
         .room-price { font-size: 1.4rem; font-weight: bold; color: #dc2626; margin-bottom: 20px; }
@@ -79,60 +93,28 @@
         .review-section { margin-top: 20px; padding-top: 50px; border-top: 2px solid #e2e8f0; margin-bottom: 80px; }
         .review-section h2 { font-size: 2rem; color: #0f172a; margin-bottom: 30px; }
         .review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-        
-        .review-card {
-            background: white; border-radius: 16px; padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;
-            position: relative; overflow: hidden;
-        }
-        .review-card::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent-color);
-        }
+        .review-card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
+        .review-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent-color); }
         .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
         .reviewer-info { display: flex; align-items: center; gap: 12px; }
-        .reviewer-avatar {
-            width: 45px; height: 45px; background: #e2e8f0; color: #475569;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; font-weight: bold; text-transform: uppercase;
-        }
+        .reviewer-avatar { width: 45px; height: 45px; background: #e2e8f0; color: #475569; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; }
         .reviewer-name { font-weight: 700; color: #1e293b; font-size: 1.1rem; }
         .review-date { font-size: 0.85rem; color: #94a3b8; }
         .review-stars { margin-bottom: 15px; font-size: 1.1rem; letter-spacing: 2px; }
         .review-comment { color: #475569; line-height: 1.6; font-size: 0.95rem; font-style: italic; }
 
         /* MODAL THANH TOÁN KHUYẾN MÃI */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15,23,42,0.8); display: flex; justify-content: center; align-items: center;
-            z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s backdrop-filter;
-            backdrop-filter: blur(5px);
-        }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s backdrop-filter; backdrop-filter: blur(5px); }
         .modal.active { opacity: 1; pointer-events: all; }
-        .modal-content {
-            background: white; width: 500px; border-radius: 12px; 
-            padding: 25px; max-height: 90vh; overflow-y: auto;
-            transform: translateY(-30px) scale(0.95); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
+        .modal-content { background: white; width: 500px; border-radius: 12px; padding: 25px; max-height: 90vh; overflow-y: auto; transform: translateY(-30px) scale(0.95); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
         .modal.active .modal-content { transform: translateY(0) scale(1); }
-        
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .modal-header h2 { margin: 0; font-size: 1.3rem; color: #0f172a; } 
         .close-btn { background: #f1f5f9; border: none; font-size: 1.2rem; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; transition: 0.2s; }
         .close-btn:hover { background: #e2e8f0; color: #0f172a; }
-        
-        .room-summary {
-            background: #f8fafc; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.95rem; border: 1px solid #e2e8f0;
-        }
-
-        .qr-section { 
-            text-align: center; margin-bottom: 15px; padding: 15px; 
-            background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;
-        }
+        .room-summary { background: #f8fafc; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; border: 1px solid #e2e8f0; }
+        .qr-section { text-align: center; margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; }
         .qr-section img { width: 120px; height: 120px; margin-bottom: 5px; border-radius: 8px; }
-
         #promo-suggestion-box::-webkit-scrollbar { width: 6px; }
         #promo-suggestion-box::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         #promo-suggestion-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -175,7 +157,44 @@
             </div>
         </div>
 
-        <h2 style="margin-top: 60px; font-size: 2rem; color: var(--primary-color);">Chọn phòng của bạn</h2>
+        <div class="search-box" style="margin-top: 60px;">
+            <div class="search-field">
+                <div class="field-icon">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <div class="field-content">
+                    <label>Địa điểm</label>
+                    <input type="text" id="locInput" readonly style="color: #64748b; cursor: not-allowed;" value="Đang tải...">
+                </div>
+            </div>
+            <div class="search-divider"></div>
+            <div class="search-field" onclick="document.getElementById('dateRange').focus()">
+                <div class="field-icon">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div class="field-content">
+                    <label>Ngày lưu trú</label>
+                    <input type="text" id="dateRange" placeholder="Nhận phòng - Trả phòng" readonly>
+                </div>
+            </div>
+            <div class="search-divider"></div>
+            <div class="search-field">
+                <div class="field-icon">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div class="field-content">
+                    <select id="capacitySelect">
+                        <option value="all">Mọi sức chứa</option>
+                        <option value="1">1 Người</option>
+                        <option value="2">2 Người</option>
+                        <option value="4">4 Người (Gia đình)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-search" id="btnSearch">Cập nhật giá</button>
+        </div>
+
+        <h2 style="margin-top: 40px; font-size: 2rem; color: var(--primary-color);">Chọn phòng của bạn</h2>
         <div class="room-grid" id="room-list"></div>
 
         <div class="review-section">
