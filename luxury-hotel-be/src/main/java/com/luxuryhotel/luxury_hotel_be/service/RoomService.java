@@ -179,6 +179,26 @@ public class RoomService {
         }
         return response;
     }
+    // 3. Hàm XÓA phòng
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> deleteRoom(Integer id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            if (!roomRepository.existsById(id)) {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy phòng để xóa!");
+                return response;
+            }
+            roomRepository.deleteById(id);
+            response.put("success", true);
+            response.put("message", "Đã xóa phòng thành công!");
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            response.put("success", false);
+            response.put("message", "Lỗi khi xóa phòng: " + e.getMessage());
+        }
+        return response;
+    }
 
     // Hàm lấy danh sách phòng theo ID Khách sạn cho Admin
     public List<AdminRoomDto> getRoomsByHotelId(Integer hotelId) {

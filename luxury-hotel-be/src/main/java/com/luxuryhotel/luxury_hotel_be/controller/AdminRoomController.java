@@ -31,4 +31,11 @@ public class AdminRoomController {
         Map<String, Object> response = roomService.updateRoom(id, request);
         return ResponseEntity.ok(response);
     }
+
+    // API Xóa phòng (DELETE)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteRoom(@PathVariable Integer id) {
+        Map<String, Object> response = roomService.deleteRoom(id);
+        return ResponseEntity.ok(response);
+    }
 }
