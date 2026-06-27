@@ -240,6 +240,11 @@ function renderReviews(reviews) {
         let avatarChar = rv.username.charAt(0).toUpperCase();
         const dateStr = new Date(rv.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+        const imageMarkup = (rv.imageUrls && rv.imageUrls.trim()) ? `<div class="review-images" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">${rv.imageUrls.split(',').filter(Boolean).map(img => {
+            const path = img.startsWith('http') ? img : `reviews/${img}`;
+            return `<img src="http://localhost:8080/${path}" alt="review image" style="width:100%; max-width:120px; height:90px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0;">`;
+        }).join('')}</div>` : '';
+
         container.innerHTML += `
             <div class="review-card">
                 <div class="review-header">
@@ -251,6 +256,7 @@ function renderReviews(reviews) {
                 </div>
                 <div class="review-stars">${stars}</div>
                 <p class="review-comment">"${rv.comment}"</p>
+                ${imageMarkup}
             </div>
         `;
     });
