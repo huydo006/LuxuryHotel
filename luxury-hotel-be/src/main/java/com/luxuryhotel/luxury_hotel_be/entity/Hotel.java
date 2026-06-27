@@ -30,4 +30,7 @@ public class Hotel {
 
     @Column(name = "bookingsCount")
     private Integer bookingsCount;
+
+    @Column(name = "amenities")
+    private String amenities;
 }

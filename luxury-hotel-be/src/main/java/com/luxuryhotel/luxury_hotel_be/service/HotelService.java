@@ -1,8 +1,20 @@
 package com.luxuryhotel.luxury_hotel_be.service;
 
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+
 import com.luxuryhotel.luxury_hotel_be.dto.HotelDetailResponse;
 import com.luxuryhotel.luxury_hotel_be.dto.HotelDto;
 import com.luxuryhotel.luxury_hotel_be.dto.HotelRequest;
+import com.luxuryhotel.luxury_hotel_be.dto.ReviewDto;
 import com.luxuryhotel.luxury_hotel_be.dto.RoomSimpleDto;
 import com.luxuryhotel.luxury_hotel_be.entity.Hotel;
 import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
@@ -11,10 +23,8 @@ import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -27,9 +37,12 @@ public class HotelService {
 
     @Autowired
     private HotelRepository hotelRepository;
-    
+
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private ReviewService reviewService;
 
     public List<HotelDto> getAllHotelsForDashboard() {
         // Lấy toàn bộ Entity từ DB
@@ -38,6 +51,11 @@ public class HotelService {
         // Dùng Stream API của Java để map Entity sang DTO cực gọn
         return hotels.stream().map(hotel -> {
             HotelDto dto = new HotelDto();
+            if (hotel.getAmenities() != null && !hotel.getAmenities().isEmpty()) {
+                dto.setAmenities(java.util.Arrays.asList(hotel.getAmenities().split(",")));
+            } else {
+                dto.setAmenities(new java.util.ArrayList<>());
+            }
             dto.setId(hotel.getHotelId());
             dto.setName(hotel.getNameHotel());
             dto.setLocation(hotel.getAddress()); // Map address -> location cho JS đọc
@@ -51,7 +69,7 @@ public class HotelService {
                     .stream()
                     .mapToInt(room -> room.getCapacity())
                     .max()
-                    .orElse(0); 
+                    .orElse(0);
             dto.setMaxCapacity(maxCap);
             // -------------------------------------------
 
@@ -70,6 +88,11 @@ public class HotelService {
         // Convert sang DTO
         return availableHotels.stream().map(hotel -> {
             HotelDto dto = new HotelDto();
+            if (hotel.getAmenities() != null && !hotel.getAmenities().isEmpty()) {
+                dto.setAmenities(java.util.Arrays.asList(hotel.getAmenities().split(",")));
+            } else {
+                dto.setAmenities(new java.util.ArrayList<>());
+            }
             dto.setId(hotel.getHotelId());
             dto.setName(hotel.getNameHotel());
             dto.setLocation(hotel.getAddress());
@@ -99,6 +122,11 @@ public class HotelService {
                 .orElseThrow(() -> new RuntimeException("Hotel not found"));
 
         HotelDto hotelDto = new HotelDto();
+        if (hotel.getAmenities() != null && !hotel.getAmenities().isEmpty()) {
+            hotelDto.setAmenities(java.util.Arrays.asList(hotel.getAmenities().split(",")));
+        } else {
+            hotelDto.setAmenities(new java.util.ArrayList<>());
+        }
         hotelDto.setId(hotel.getHotelId());
         hotelDto.setName(hotel.getNameHotel());
         hotelDto.setLocation(hotel.getAddress());
@@ -111,8 +139,10 @@ public class HotelService {
         List<RoomSimpleDto> rooms;
 
         if (checkIn != null && checkOut != null) {
-            // Trường hợp 1: Khách có lọc ngày -> Dùng Query BR3 tính chính xác số phòng trống
-            List<RoomRepository.RoomAvailability> availableRooms = roomRepository.findAvailableRooms(hotelId, checkIn, checkOut);
+            // Trường hợp 1: Khách có lọc ngày -> Dùng Query BR3 tính chính xác số phòng
+            // trống
+            List<RoomRepository.RoomAvailability> availableRooms = roomRepository.findAvailableRooms(hotelId, checkIn,
+                    checkOut);
             rooms = availableRooms.stream().map(r -> {
                 RoomSimpleDto dto = new RoomSimpleDto();
                 dto.setId(r.getRoomId());
@@ -128,7 +158,7 @@ public class HotelService {
                 RoomSimpleDto dto = new RoomSimpleDto();
                 dto.setId(r.getRoomId());
                 dto.setName(r.getRoomType());
-                dto.setCapacity(r.getCapacity()); 
+                dto.setCapacity(r.getCapacity());
                 dto.setPrice(r.getDefaultPrice());
                 dto.setAvailableQuantity(r.getQuantity()); // Lấy tổng quỹ phòng
                 return dto;
@@ -136,10 +166,12 @@ public class HotelService {
         }
 
         // 3. Set vào response
+        List<ReviewDto> reviews = reviewService.getReviewsByHotel(hotelId);
+
         response.setSuccess(true);
         response.setHotel(hotelDto);
         response.setRooms(rooms);
-        // response.setReviews(reviewList); // Làm tương tự với Reviews nếu em đã viết
+        response.setReviews(reviews);
 
         return response;
     }
@@ -148,7 +180,7 @@ public class HotelService {
     // import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
     // 1. Hàm THÊM MỚI khách sạn
-    @Transactional(rollbackFor = Exception.class) 
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> createHotel(HotelRequest request) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -157,11 +189,15 @@ public class HotelService {
             hotel.setAddress(request.getLocation()); // Frontend gọi là location, DB là address
             hotel.setImage(request.getImage());
             hotel.setDescription(request.getDescription());
-            
+
             // Thiết lập giá trị mặc định cho khách sạn mới
             hotel.setRating(5); // Khách sạn Luxury mặc định 5 sao
             hotel.setBookingsCount(0); // Lượt đặt ban đầu là 0
-
+            if (request.getAmenities() != null && !request.getAmenities().isEmpty()) {
+                hotel.setAmenities(String.join(",", request.getAmenities()));
+            } else {
+                hotel.setAmenities("");
+            }
             hotelRepository.save(hotel);
 
             response.put("success", true);
@@ -169,7 +205,7 @@ public class HotelService {
         } catch (Exception e) {
             // Lệnh ép Spring phải Rollback Database dù đã dùng try-catch
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            
+
             response.put("success", false);
             response.put("message", "Lỗi khi thêm khách sạn: " + e.getMessage());
         }
@@ -189,7 +225,11 @@ public class HotelService {
             hotel.setAddress(request.getLocation());
             hotel.setImage(request.getImage());
             hotel.setDescription(request.getDescription());
-
+            if (request.getAmenities() != null && !request.getAmenities().isEmpty()) {
+                hotel.setAmenities(String.join(",", request.getAmenities()));
+            } else {
+                hotel.setAmenities("");
+            }
             hotelRepository.save(hotel);
 
             response.put("success", true);
@@ -197,12 +237,13 @@ public class HotelService {
         } catch (Exception e) {
             // Lệnh ép Spring phải Rollback Database
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            
+
             response.put("success", false);
             response.put("message", "Lỗi khi cập nhật: " + e.getMessage());
         }
         return response;
     }
+
     // 3. Hàm XÓA khách sạn
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> deleteHotel(Integer id) {

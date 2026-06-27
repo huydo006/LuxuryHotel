@@ -42,7 +42,7 @@ window.switchTab = (tabId) => {
     if (tabId === 'tab-bookings') fetchAllBookings();
     if (tabId === 'tab-hotels') fetchAllHotels();
     if (tabId === 'tab-rooms') loadHotelDropdownForRooms();
-    if (tabId === 'tab-customers') fetchAllCustomers(); 
+    if (tabId === 'tab-customers') fetchAllCustomers();
     if (tabId === 'tab-promotions') fetchAllPromotions(); // Kích hoạt tab Khuyến mãi
 };
 
@@ -72,7 +72,7 @@ function renderBookings(bookings) {
         // Xử lý hiển thị trạng thái và khóa nút
         let statusHtml = '';
         let disableBtns = '';
-        
+
         if (b.status === 'processing') {
             statusHtml = `<span class="status processing">Đang chờ duyệt</span>`;
         } else if (b.status === 'success') {
@@ -113,7 +113,7 @@ window.updateStatus = async (bookingId, newStatus) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newStatus })
         });
-        
+
         const result = await response.json();
         if (result.success) {
             alert(result.message);
@@ -129,7 +129,7 @@ window.updateStatus = async (bookingId, newStatus) => {
 // ==========================================
 // 4. QUẢN LÝ KHÁCH SẠN (UC-05)
 // ==========================================
-let globalHotels = []; 
+let globalHotels = [];
 
 async function fetchAllHotels() {
     try {
@@ -144,7 +144,7 @@ async function fetchAllHotels() {
 function renderAdminHotels(hotels) {
     const tbody = document.getElementById('hotel-list');
     tbody.innerHTML = '';
-    
+
     if (hotels.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Chưa có khách sạn nào trong hệ thống.</td></tr>`;
         return;
@@ -172,7 +172,10 @@ let isEditingHotel = false;
 
 window.openHotelModal = (hotelId = null) => {
     isEditingHotel = !!hotelId;
-    
+
+    // Bỏ chọn tất cả checkbox trước để khi mở modal mới không bị lưu lại tích cũ
+    document.querySelectorAll('#h-amenities-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+
     if (isEditingHotel) {
         document.getElementById('hotelModalTitle').innerText = 'Sửa Thông Tin Khách Sạn';
         const h = globalHotels.find(x => x.id === hotelId);
@@ -181,6 +184,19 @@ window.openHotelModal = (hotelId = null) => {
         document.getElementById('h-location').value = h.location;
         document.getElementById('h-image').value = h.image;
         document.getElementById('h-desc').value = h.description;
+
+        // --- ĐOẠN SỬA/THÊM MỚI: Tự động tick lại các tiện ích của khách sạn này ---
+        if (h.amenities && Array.isArray(h.amenities)) {
+            h.amenities.forEach(am => {
+                // Tìm checkbox có giá trị trùng với tiện ích trong mảng
+                const cb = document.querySelector(`#h-amenities-checkboxes input[value="${am}"]`);
+                if (cb) {
+                    cb.checked = true;
+                }
+            });
+        }
+        // -----------------------------------------------------------------------
+
     } else {
         document.getElementById('hotelModalTitle').innerText = 'Thêm Khách Sạn Mới';
         document.getElementById('h-id').value = '';
@@ -197,20 +213,32 @@ window.closeHotelModal = () => {
 }
 
 window.saveHotel = async () => {
+    // 1. Lấy dữ liệu từ các ô nhập text
     const id = document.getElementById('h-id').value;
     const name = document.getElementById('h-name').value.trim();
     const location = document.getElementById('h-location').value.trim();
     const image = document.getElementById('h-image').value.trim();
     const description = document.getElementById('h-desc').value.trim();
 
+    // 2. Lấy dữ liệu từ các thẻ tiện ích (amenities) đã được tick chọn
+    const amenities = [];
+    document.querySelectorAll('#h-amenities-checkboxes input[type="checkbox"]:checked').forEach(cb => {
+        amenities.push(cb.value);
+    });
+
+    // 3. Kiểm tra rỗng
     if(!name || !location || !image) {
         return alert("Vui lòng nhập đầy đủ Tên, Địa điểm và Link ảnh!");
     }
 
-    const payload = { name, location, image, description };
+    // 4. Gộp vào payload gửi đi
+    const payload = { name, location, image, description, amenities };
+    
+    // 5. Xác định là Thêm mới (POST) hay Cập nhật (PUT)
     const method = isEditingHotel ? 'PUT' : 'POST';
     const url = isEditingHotel ? `http://localhost:8080/api/admin/hotels/${id}` : `http://localhost:8080/api/admin/hotels`;
 
+    // 6. Gửi API
     try {
         const res = await fetch(url, {
             method: method,
@@ -221,30 +249,31 @@ window.saveHotel = async () => {
         
         if (data.success) {
             alert(data.message);
-            closeHotelModal();
-            fetchAllHotels();
+            closeHotelModal(); // Đóng modal
+            fetchAllHotels();  // Tải lại danh sách
         } else {
-            alert("Lỗi: " + data.message);
+            alert("Lỗi từ Backend: " + data.message);
         }
     } catch (error) {
-        alert("Lỗi kết nối máy chủ!");
+        console.error("Lỗi khi gửi API:", error);
+        alert("Lỗi kết nối máy chủ! Hãy kiểm tra lại Backend.");
     }
 }
 
 window.deleteHotel = async (id) => {
-    if(!confirm("CẢNH BÁO: Việc xóa khách sạn sẽ xóa toàn bộ phòng thuộc khách sạn này. Bạn có chắc chắn không?")) return;
+    if (!confirm("CẢNH BÁO: Việc xóa khách sạn sẽ xóa toàn bộ phòng thuộc khách sạn này. Bạn có chắc chắn không?")) return;
 
     try {
         const res = await fetch(`http://localhost:8080/api/admin/hotels/${id}`, {
             method: 'DELETE'
         });
         const data = await res.json();
-        
-        if(data.success) {
+
+        if (data.success) {
             alert(data.message);
             fetchAllHotels();
         } else {
-            alert(data.message); 
+            alert(data.message);
         }
     } catch (error) {
         alert("Lỗi kết nối máy chủ!");
@@ -261,14 +290,14 @@ async function loadHotelDropdownForRooms() {
         const res = await fetch('http://localhost:8080/api/hotels');
         const hotels = await res.json();
         const select = document.getElementById('room-hotel-select');
-        
-        const currentVal = select.value; 
-        
+
+        const currentVal = select.value;
+
         select.innerHTML = '<option value="">-- Vui lòng chọn khách sạn --</option>';
         hotels.forEach(h => {
             select.innerHTML += `<option value="${h.id}">${h.name} (${h.location})</option>`;
         });
-        
+
         if (currentVal) select.value = currentVal;
     } catch (error) {
         console.error("Lỗi tải danh sách khách sạn", error);
@@ -303,7 +332,8 @@ function renderAdminRooms(rooms) {
     tbody.innerHTML = '';
 
     if (rooms.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">Khách sạn này chưa có phòng nào. Hãy thêm mới!</td></tr>`;
+        // Tăng colspan từ 5 lên 6 vì bảng đã có thêm cột "Số lượng"
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b;">Khách sạn này chưa có phòng nào. Hãy thêm mới!</td></tr>`;
         return;
     }
 
@@ -313,6 +343,7 @@ function renderAdminRooms(rooms) {
             <td>#${r.roomID}</td>
             <td><strong>${r.roomType}</strong></td>
             <td>${r.capacity} người</td>
+            <td><span style="font-weight: 600; color: #475569;">${r.quantity}</span> phòng</td>
             <td style="color: #dc2626; font-weight: 600;">${r.defaultPrice.toLocaleString('vi-VN')} ₫</td>
             <td class="action-btns">
                 <button class="btn-sm btn-edit" onclick="openRoomModal(${r.roomID})">Sửa</button>
@@ -328,7 +359,7 @@ let isEditingRoom = false;
 
 window.openRoomModal = (roomId = null) => {
     isEditingRoom = !!roomId;
-    
+
     if (isEditingRoom) {
         document.getElementById('roomModalTitle').innerText = 'Sửa Thông Tin Phòng';
         const r = globalRooms.find(x => x.roomID === roomId);
@@ -336,12 +367,14 @@ window.openRoomModal = (roomId = null) => {
         document.getElementById('r-type').value = r.roomType;
         document.getElementById('r-capacity').value = r.capacity;
         document.getElementById('r-price').value = r.defaultPrice;
+        document.getElementById('r-quantity').value = r.quantity;
     } else {
         document.getElementById('roomModalTitle').innerText = 'Thêm Phòng Mới';
         document.getElementById('r-id').value = '';
         document.getElementById('r-type').value = '';
         document.getElementById('r-capacity').value = '';
         document.getElementById('r-price').value = '';
+        document.getElementById('r-quantity').value = '';
     }
     roomModal.classList.add('active');
 }
@@ -355,13 +388,14 @@ window.saveRoom = async () => {
     const roomId = document.getElementById('r-id').value;
     const roomType = document.getElementById('r-type').value.trim();
     const capacity = document.getElementById('r-capacity').value.trim();
+    const quantity = document.getElementById('r-quantity').value.trim();
     const price = document.getElementById('r-price').value.trim();
 
     if (!roomType || !capacity || !price) {
         return alert("Vui lòng nhập đầy đủ thông tin phòng!");
     }
 
-    const payload = { hotelId, roomType, capacity, price };
+    const payload = { hotelId, roomType, capacity, price, quantity };
     const method = isEditingRoom ? 'PUT' : 'POST';
     const url = isEditingRoom ? `http://localhost:8080/api/admin/rooms/${roomId}` : `http://localhost:8080/api/admin/rooms`;
 
@@ -372,13 +406,13 @@ window.saveRoom = async () => {
             body: JSON.stringify(payload)
         });
         const data = await res.json();
-        
+
         if (data.success) {
             alert("Hệ thống: " + data.message);
             closeRoomModal();
-            loadRoomsForSelectedHotel(); 
+            loadRoomsForSelectedHotel();
         } else {
-            alert("Lỗi: " + data.message); 
+            alert("Lỗi: " + data.message);
         }
     } catch (error) {
         alert("Lỗi kết nối máy chủ!");
@@ -386,17 +420,17 @@ window.saveRoom = async () => {
 }
 
 window.deleteRoom = async (id) => {
-    if(!confirm("Bạn có chắc chắn muốn xóa phòng này không?")) return;
+    if (!confirm("Bạn có chắc chắn muốn xóa phòng này không?")) return;
 
     try {
         const res = await fetch(`http://localhost:8080/api/admin/rooms/${id}`, { method: 'DELETE' });
         const data = await res.json();
-        
-        if(data.success) {
+
+        if (data.success) {
             alert(data.message);
             loadRoomsForSelectedHotel();
         } else {
-            alert(data.message); 
+            alert(data.message);
         }
     } catch (error) {
         alert("Lỗi kết nối máy chủ!");
@@ -427,7 +461,7 @@ async function fetchAllCustomers(keyword = '') {
         if (keyword) {
             url += `?keyword=${encodeURIComponent(keyword)}`;
         }
-        
+
         const response = await fetch(url);
         globalCustomers = await response.json();
         renderAdminCustomers(globalCustomers);
@@ -475,20 +509,20 @@ window.openCustomerModal = (customerId = null) => {
         document.getElementById('c-id').value = c.accountID;
         document.getElementById('c-fullname').value = c.fullName;
         document.getElementById('c-email').value = c.email;
-        
+
         usernameInput.value = c.username;
-        usernameInput.disabled = true; 
-        passGroup.style.display = 'none'; 
+        usernameInput.disabled = true;
+        passGroup.style.display = 'none';
     } else {
         document.getElementById('customerModalTitle').innerText = 'Thêm Khách Hàng Mới';
         document.getElementById('c-id').value = '';
         document.getElementById('c-fullname').value = '';
         document.getElementById('c-email').value = '';
-        
+
         usernameInput.value = '';
-        usernameInput.disabled = false; 
+        usernameInput.disabled = false;
         document.getElementById('c-password').value = '';
-        passGroup.style.display = 'block'; 
+        passGroup.style.display = 'block';
     }
     customerModal.classList.add('active');
 }
@@ -525,12 +559,12 @@ window.saveCustomer = async () => {
             body: JSON.stringify(payload)
         });
         const data = await res.json();
-        
+
         if (data.success) {
             alert("Hệ thống: " + data.message);
             closeCustomerModal();
             const currentKeyword = document.getElementById('search-customer').value.trim();
-            fetchAllCustomers(currentKeyword); 
+            fetchAllCustomers(currentKeyword);
         } else {
             alert("Lỗi: " + data.message);
         }
@@ -540,18 +574,18 @@ window.saveCustomer = async () => {
 }
 
 window.deleteCustomer = async (id) => {
-    if(!confirm("CẢNH BÁO: Bạn có chắc chắn muốn xóa tài khoản khách hàng này khỏi hệ thống không?")) return;
+    if (!confirm("CẢNH BÁO: Bạn có chắc chắn muốn xóa tài khoản khách hàng này khỏi hệ thống không?")) return;
 
     try {
         const res = await fetch(`http://localhost:8080/api/admin/customers/${id}`, { method: 'DELETE' });
         const data = await res.json();
-        
-        if(data.success) {
+
+        if (data.success) {
             alert(data.message);
             const currentKeyword = document.getElementById('search-customer').value.trim();
             fetchAllCustomers(currentKeyword);
         } else {
-            alert(data.message); 
+            alert(data.message);
         }
     } catch (error) {
         alert("Lỗi kết nối máy chủ!");
@@ -680,13 +714,13 @@ window.savePromo = async () => {
             body: JSON.stringify(payload)
         });
         const data = await res.json();
-        
+
         if (data.success) {
             alert(data.message);
             closePromoModal();
-            fetchAllPromotions(); 
+            fetchAllPromotions();
         } else {
-            alert("Lỗi: " + data.message); 
+            alert("Lỗi: " + data.message);
         }
     } catch (error) {
         alert("Lỗi kết nối máy chủ!");
@@ -695,10 +729,10 @@ window.savePromo = async () => {
 
 // Gọi API Tạm dừng / Kích hoạt lại
 window.togglePromoStatus = async (id, newStatus) => {
-    const msg = newStatus === 1 
-        ? "Bạn có chắc chắn muốn KÍCH HOẠT LẠI chương trình này?" 
+    const msg = newStatus === 1
+        ? "Bạn có chắc chắn muốn KÍCH HOẠT LẠI chương trình này?"
         : "Khi tạm dừng, mã giảm giá sẽ không thể sử dụng. Bạn có chắc chắn?";
-        
+
     if (!confirm(msg)) return;
 
     try {
@@ -708,7 +742,7 @@ window.togglePromoStatus = async (id, newStatus) => {
             body: JSON.stringify({ isValid: newStatus })
         });
         const data = await res.json();
-        
+
         if (data.success) {
             alert(data.message);
             fetchAllPromotions();
@@ -727,17 +761,48 @@ window.deletePromo = async (id) => {
     try {
         const res = await fetch(`http://localhost:8080/api/admin/promotions/${id}`, { method: 'DELETE' });
         const data = await res.json();
-        
+
         if (data.success) {
             alert(data.message);
             fetchAllPromotions();
         } else {
-            alert(data.message); 
+            alert(data.message);
         }
     } catch (error) {
         alert("Lỗi kết nối máy chủ!");
     }
 }
 
-// Khởi chạy mặc định khi mở trang (Tab Đặt phòng đang được Active)
+async function fetchMasterAmenities() {
+    try {
+        const res = await fetch('http://localhost:8080/api/amenities');
+        const masterAmenities = await res.json();
+        const container = document.getElementById('h-amenities-checkboxes');
+        
+        if (container) {
+            container.innerHTML = ''; 
+            masterAmenities.forEach(am => {
+                container.innerHTML += `
+                    <label class="amenity-checkbox-label">
+                        <input type="checkbox" value="${am}">
+                        <span class="amenity-chip">${am}</span>
+                    </label>
+                `;
+            });
+        }
+    } catch (e) {
+        console.error("Lỗi tải tiện ích", e);
+        const container = document.getElementById('h-amenities-checkboxes');
+        if (container) {
+            container.innerHTML = '<span style="color: red;">Lỗi tải kho tiện ích từ Server!</span>';
+        }
+    }
+}
+
+fetchMasterAmenities().then(() => {
+    // Nếu có logic mở modal ngay lập tức hoặc xử lý bất đồng bộ thì tiện ích đã sẵn sàng
+    console.log("Hệ thống: Kho tiện ích đã được tải thành công.");
+});
+
+// 2. Chạy mặc định hiển thị tab Quản lý đặt phòng đầu tiên
 fetchAllBookings();

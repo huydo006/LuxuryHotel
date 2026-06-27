@@ -1,7 +1,7 @@
 package com.luxuryhotel.luxury_hotel_be.dto;
 
 import lombok.Data;
-
+import java.util.List;
 @Data
 public class HotelDto {
     private Integer id;           // Khớp với hotel.id trong JS
@@ -12,4 +12,5 @@ public class HotelDto {
     private String image;         // Khớp với hotel.image
     private Integer bookingsCount;// Khớp với hotel.bookingsCount
     private Integer maxCapacity;
+    private List<String> amenities;
 }
