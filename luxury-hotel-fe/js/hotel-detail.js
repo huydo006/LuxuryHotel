@@ -14,14 +14,14 @@ const urlParams = new URLSearchParams(window.location.search);
 const hotelId = urlParams.get('id');
 let queryCheckIn = urlParams.get('checkIn');   
 let queryCheckOut = urlParams.get('checkOut'); 
+let queryCapacity = urlParams.get('capacity') || 'all'; // Đã thêm query lấy sức chứa
 
 if (!hotelId) {
     alert("Lỗi: Không xác định được khách sạn!");
     window.location.href = 'customer-dashboard.html';
 }
 
-// FIX: Tự động gán ngày Hôm nay -> Ngày mai nếu URL trống, 
-// Xử lý cẩn thận định dạng YYYY-MM-DD để tránh lỗi múi giờ
+// FIX: Tự động gán ngày Hôm nay -> Ngày mai nếu URL trống
 if (!queryCheckIn || !queryCheckOut) {
     const today = new Date();
     const tomorrow = new Date(today);
@@ -91,13 +91,20 @@ async function fetchHotelDetails() {
 
 function renderRooms(rooms) {
     const container = document.getElementById('room-list');
-    if (rooms.length === 0) {
-        container.innerHTML = '<p style="color:red; font-weight:bold; grid-column: 1/-1; text-align: center; padding: 20px;">Hiện tại khách sạn này đã hết phòng trống trong khoảng thời gian bạn chọn.</p>';
+    container.innerHTML = ''; // Clear loading state
+    
+    // LỌC: Ẩn các phòng không đủ sức chứa yêu cầu
+    const filteredRooms = rooms.filter(room => {
+        if (queryCapacity === 'all') return true;
+        return room.capacity >= parseInt(queryCapacity);
+    });
+
+    if (filteredRooms.length === 0) {
+        container.innerHTML = '<p style="color:red; font-weight:bold; grid-column: 1/-1; text-align: center; padding: 20px;">Không có phòng nào đáp ứng đủ số lượng người bạn yêu cầu trong khoảng thời gian này.</p>';
         return;
     }
 
-    container.innerHTML = ''; // Clear loading state
-    rooms.forEach(room => {
+    filteredRooms.forEach(room => {
         const availableCount = room.availableQuantity ?? room.quantity;
         const isSoldOut = availableCount <= 0;
 
@@ -254,6 +261,11 @@ function renderReviews(reviews) {
         let avatarChar = rv.username.charAt(0).toUpperCase();
         const dateStr = new Date(rv.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+        const imageMarkup = (rv.imageUrls && rv.imageUrls.trim()) ? `<div class="review-images" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">${rv.imageUrls.split(',').filter(Boolean).map(img => {
+            const path = img.startsWith('http') ? img : `reviews/${img}`;
+            return `<img src="http://localhost:8080/${path}" alt="review image" style="width:100%; max-width:120px; height:90px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0;">`;
+        }).join('')}</div>` : '';
+
         container.innerHTML += `
             <div class="review-card">
                 <div class="review-header">
@@ -265,6 +277,7 @@ function renderReviews(reviews) {
                 </div>
                 <div class="review-stars">${stars}</div>
                 <p class="review-comment">"${rv.comment}"</p>
+                ${imageMarkup}
             </div>
         `;
     });
@@ -283,6 +296,12 @@ flatpickr("#dateRange", {
     defaultDate: [queryCheckIn, queryCheckOut]
 });
 
+// Đồng bộ sức chứa vào Select Box
+const capacitySelectEl = document.getElementById('capacitySelect');
+if (capacitySelectEl) {
+    capacitySelectEl.value = queryCapacity;
+}
+
 // Gán địa điểm vào ô location
 setTimeout(() => {
     const loc = document.getElementById('hotel-loc')?.innerText.replace('📍 ', '');
@@ -295,14 +314,14 @@ setTimeout(() => {
     }
 }, 500);
 
-// Xử lý nút cập nhật giá (Reload với URL mới)
+// Xử lý nút cập nhật giá (Mang theo cả Ngày và Sức chứa mới)
 document.getElementById('btnSearch').addEventListener('click', () => {
     const range = document.getElementById('dateRange').value;
+    const selectedCap = document.getElementById('capacitySelect').value;
     
     let cIn = "";
     let cOut = "";
 
-    // BẢN FIX: Hỗ trợ tách chuỗi ngày theo cả 2 ngôn ngữ (to / đến)
     if (range) {
         const separator = range.includes(' đến ') ? ' đến ' : (range.includes(' to ') ? ' to ' : null);
         if (separator) {
@@ -314,7 +333,8 @@ document.getElementById('btnSearch').addEventListener('click', () => {
 
     if (!cIn || !cOut) return alert("Vui lòng chọn đầy đủ ngày Nhận phòng và Trả phòng!");
     
-    window.location.href = `hotel-detail.html?id=${hotelId}&checkIn=${cIn}&checkOut=${cOut}`;
+    // Gắn thêm sức chứa vào URL khi tải lại trang
+    window.location.href = `hotel-detail.html?id=${hotelId}&checkIn=${cIn.trim()}&checkOut=${cOut.trim()}&capacity=${selectedCap}`;
 });
 
 // Khởi chạy
