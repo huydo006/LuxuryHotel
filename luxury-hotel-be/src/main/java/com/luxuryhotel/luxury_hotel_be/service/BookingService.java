@@ -1,6 +1,4 @@
 package com.luxuryhotel.luxury_hotel_be.service;
-import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +21,7 @@ import com.luxuryhotel.luxury_hotel_be.entity.Room;
 import com.luxuryhotel.luxury_hotel_be.repository.AccountRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.BookingDetailRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.BookingRepository;
+import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.PromotionRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
 
@@ -184,7 +183,6 @@ public class BookingService {
     }
 
     // BookingService.java — chỉ sửa method updateBookingStatus
-
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> updateBookingStatus(Integer bookingId, String newStatus) {
         Map<String, Object> response = new HashMap<>();
@@ -197,19 +195,43 @@ public class BookingService {
             bookingRepository.save(booking);
 
             // ==========================================
-            // LOGIC MỚI: CHỈ TĂNG LƯỢT ĐẶT KHI ADMIN DUYỆT (SUCCESS)
+            // LOGIC MỚI: CHỈ TĂNG LƯỢT ĐẶT VÀ GỬI EMAIL KHI ADMIN DUYỆT (SUCCESS)
             // ==========================================
             if (statusEnum == Booking.Status.success) {
                 // Lấy chi tiết đơn để dò ra khách sạn
                 List<BookingDetail> details = bookingDetailRepository.findByBooking_BookingId(bookingId);
                 
                 if (!details.isEmpty()) {
-                    Hotel hotel = details.get(0).getRoom().getHotel();
+                    Room room = details.get(0).getRoom();
+                    Hotel hotel = room.getHotel();
+                    
                     int currentCount = hotel.getBookingsCount() != null ? hotel.getBookingsCount() : 0;
                     hotel.setBookingsCount(currentCount + 1);
                     
                     // Lưu lại số lượt đặt mới vào Database
                     hotelRepository.save(hotel);
+
+                    // THÊM LOGIC GỬI EMAIL TẠI ĐÂY
+                    try {
+                        Account account = booking.getAccount();
+                        // Lưu ý: Hãy sửa lại các hàm getEmail(), getFullName(), getAddress() 
+                        // cho đúng với tên thuộc tính trong Entity Account và Hotel của bạn
+                        String toEmail = account.getEmail(); 
+                        String customerName = account.getUsername(); // hoặc getFullName()
+                        String hotelName = hotel.getNameHotel();
+                        String checkIn = booking.getCheckInDate().toString();
+                        String checkOut = booking.getCheckOutDate().toString();
+                        String totalPaid = String.valueOf(booking.getTotalPrice());
+                        String hotelAddress = hotel.getAddress(); // Nếu hotel có trường address
+
+                        emailService.sendBookingConfirmationEmail(
+                                toEmail, customerName, hotelName, checkIn, checkOut,
+                                String.valueOf(booking.getBookingId()), totalPaid, hotelAddress
+                        );
+                    } catch (Exception e) {
+                        System.err.println("Lỗi khi gửi email xác nhận: " + e.getMessage());
+                        // Có thể log lỗi ra nhưng không throw để tránh rollback việc duyệt đơn
+                    }
                 }
             }
             // ==========================================
@@ -223,4 +245,5 @@ public class BookingService {
         }
         return response;
     }
+    
 }
