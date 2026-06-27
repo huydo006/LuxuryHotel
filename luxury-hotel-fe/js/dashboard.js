@@ -42,8 +42,8 @@ async function fetchHotels() {
     }
 }
 
-// 3. HIỂN THỊ LÊN GIAO DIỆN (Đã thêm tham số checkIn, checkOut để gắn vào URL)
-function renderHotels(hotels, checkIn = "", checkOut = "") {
+// 3. HIỂN THỊ LÊN GIAO DIỆN (Đã thêm tham số checkIn, checkOut, capacity để gắn vào URL)
+function renderHotels(hotels, checkIn = "", checkOut = "", capacity = "all") {
     hotelContainer.innerHTML = ''; 
     
     if (hotels.length === 0) {
@@ -52,10 +52,13 @@ function renderHotels(hotels, checkIn = "", checkOut = "") {
     }
 
     hotels.forEach(hotel => {
-        // Build URL: Nếu khách có tìm theo ngày, đẩy ngày đó sang trang chi tiết
+        // Build URL: Nếu khách có tìm theo ngày và sức chứa, đẩy sang trang chi tiết
         let detailUrl = `hotel-detail.html?id=${hotel.id}`;
         if (checkIn && checkOut) {
             detailUrl += `&checkIn=${checkIn}&checkOut=${checkOut}`;
+        }
+        if (capacity && capacity !== 'all') {
+            detailUrl += `&capacity=${capacity}`;
         }
 
         const card = document.createElement('div');
@@ -86,7 +89,7 @@ document.getElementById('btnSearch').addEventListener('click', async () => {
         return;
     }
     
-    // BẢN FIX: Hỗ trợ tách chuỗi ngày theo cả 2 ngôn ngữ (to / đến)
+    // Hỗ trợ tách chuỗi ngày theo cả 2 ngôn ngữ (to / đến)
     let checkIn = "";
     let checkOut = "";
     if (dateRange) {
@@ -128,8 +131,8 @@ document.getElementById('btnSearch').addEventListener('click', async () => {
             return;
         }
 
-        // Truyền thêm checkIn và checkOut (nếu có) để gắn vào nút "Xem Các Phòng"
-        renderHotels(resultHotels, checkIn, checkOut);
+        // Truyền thêm checkIn, checkOut, và capacityVal để gắn vào nút "Xem Các Phòng"
+        renderHotels(resultHotels, checkIn, checkOut, capacityVal);
 
     } catch (error) {
         showToast("Lỗi truy xuất dữ liệu, vui lòng thử lại sau.", "error");
