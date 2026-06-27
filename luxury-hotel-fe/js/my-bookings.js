@@ -112,13 +112,19 @@ window.cancelMyBooking = async (bookingId) => {
 // ==================== 6. LOGIC ĐÁNH GIÁ (MỚI THÊM) ====================
 let currentReviewHotelId = null;
 let currentRating = 0;
+let selectedReviewImages = [];
 const reviewModal = document.getElementById('reviewModal');
 const stars = document.querySelectorAll('.star-rating span');
+const reviewImageInput = document.getElementById('rv-images');
+const reviewPreview = document.getElementById('rv-preview');
 
 window.openReviewModal = (hotelId, hotelName) => {
     currentReviewHotelId = hotelId;
     document.getElementById('rv-hotel-name').innerText = hotelName;
     document.getElementById('rv-comment').value = '';
+    selectedReviewImages = [];
+    reviewPreview.innerHTML = '';
+    reviewImageInput.value = '';
     setRating(0); // Reset sao
     reviewModal.classList.add('active');
 }
@@ -126,6 +132,30 @@ window.openReviewModal = (hotelId, hotelName) => {
 window.closeReviewModal = () => {
     reviewModal.classList.remove('active');
 }
+
+reviewImageInput?.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files || []);
+    const supported = files.filter(file => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type));
+    if (supported.length !== files.length) {
+        alert('Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP. Vui lòng chọn lại file phù hợp.');
+        e.target.value = '';
+        selectedReviewImages = [];
+        reviewPreview.innerHTML = '';
+        return;
+    }
+
+    selectedReviewImages = supported;
+    reviewPreview.innerHTML = '';
+    selectedReviewImages.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = document.createElement('img');
+            img.src = event.target.result;
+            reviewPreview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+});
 
 // Xử lý click vào Ngôi sao
 stars.forEach(star => {
@@ -152,15 +182,18 @@ window.submitReview = async () => {
     if (!comment) return alert("Vui lòng nhập nội dung đánh giá!");
 
     try {
+        const formData = new FormData();
+        formData.append('review', new Blob([JSON.stringify({
+            userId: currentUser.accountId,
+            hotelId: currentReviewHotelId,
+            rating: currentRating,
+            comment: comment
+        })], { type: 'application/json' }));
+        selectedReviewImages.forEach(file => formData.append('images', file));
+
         const res = await fetch('http://localhost:8080/api/reviews', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: currentUser.accountId, // ĐÃ FIX BUG: Đổi currentUser.id thành currentUser.accountId
-                hotelId: currentReviewHotelId,
-                rating: currentRating,
-                comment: comment
-            })
+            body: formData
         });
         const data = await res.json();
         if (data.success) {

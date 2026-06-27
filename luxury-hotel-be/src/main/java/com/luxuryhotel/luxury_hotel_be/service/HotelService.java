@@ -1,26 +1,24 @@
 package com.luxuryhotel.luxury_hotel_be.service;
 
-import com.luxuryhotel.luxury_hotel_be.dto.HotelDetailResponse;
-import com.luxuryhotel.luxury_hotel_be.dto.HotelDto;
-import com.luxuryhotel.luxury_hotel_be.dto.HotelRequest;
-import com.luxuryhotel.luxury_hotel_be.dto.RoomSimpleDto;
-import com.luxuryhotel.luxury_hotel_be.entity.Hotel;
-import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
-import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
-
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
-
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+
+import com.luxuryhotel.luxury_hotel_be.dto.HotelDetailResponse;
+import com.luxuryhotel.luxury_hotel_be.dto.HotelDto;
+import com.luxuryhotel.luxury_hotel_be.dto.HotelRequest;
+import com.luxuryhotel.luxury_hotel_be.dto.ReviewDto;
+import com.luxuryhotel.luxury_hotel_be.dto.RoomSimpleDto;
+import com.luxuryhotel.luxury_hotel_be.entity.Hotel;
+import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
+import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
 
 @Service
 public class HotelService {
@@ -30,6 +28,9 @@ public class HotelService {
     
     @Autowired
     private RoomRepository roomRepository;
+
+    @Autowired
+    private ReviewService reviewService;
 
     public List<HotelDto> getAllHotelsForDashboard() {
         // Lấy toàn bộ Entity từ DB
@@ -136,10 +137,12 @@ public class HotelService {
         }
 
         // 3. Set vào response
+        List<ReviewDto> reviews = reviewService.getReviewsByHotel(hotelId);
+
         response.setSuccess(true);
         response.setHotel(hotelDto);
         response.setRooms(rooms);
-        // response.setReviews(reviewList); // Làm tương tự với Reviews nếu em đã viết
+        response.setReviews(reviews);
 
         return response;
     }
