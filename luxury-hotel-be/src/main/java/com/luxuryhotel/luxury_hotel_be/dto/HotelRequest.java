@@ -9,4 +9,5 @@ public class HotelRequest {
     private String image;
     private String description;
     private List<String> amenities;
+    private Integer adminId;
 }

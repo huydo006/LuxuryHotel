@@ -19,7 +19,7 @@ public class Booking {
 
     // Khóa ngoại liên kết tới bảng Accounts
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "accountID", nullable = false)
+    @JoinColumn(name = "accountID")
     private Account account;
 
     // Khóa ngoại liên kết tới bảng Promotions (Có thể null nếu khách không dùng mã)
@@ -54,6 +54,10 @@ public class Booking {
     public enum Status {
         processing, success, cancelled
     }
+
+    @ManyToOne
+    @JoinColumn(name = "approvedBy_AccountID")
+    private Account approvedBy;
 
     @Column(name = "paymentReceipt")
     private String paymentReceipt;

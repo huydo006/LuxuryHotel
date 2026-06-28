@@ -35,6 +35,8 @@ public class CustomerService {
             dto.setUsername(acc.getUsername());
             dto.setFullName(acc.getFullName());
             dto.setEmail(acc.getEmail());
+            dto.setPhoneNumber(acc.getPhoneNumber()); 
+            
             return dto;
         }).collect(Collectors.toList());
     }
@@ -53,6 +55,12 @@ public class CustomerService {
             Account account = new Account();
             account.setFullName(request.getFullName());
             account.setEmail(request.getEmail());
+            
+            // ==========================================
+            // THÊM SỐ ĐIỆN THOẠI KHI TẠO MỚI
+            // ==========================================
+            account.setPhoneNumber(request.getPhoneNumber());
+            
             account.setUsername(request.getUsername());
             account.setPassword(request.getPassword());
             account.setRole(Account.Role.Customer);
@@ -79,6 +87,11 @@ public class CustomerService {
 
             account.setFullName(request.getFullName());
             account.setEmail(request.getEmail());
+            
+            // ==========================================
+            // CẬP NHẬT SỐ ĐIỆN THOẠI KHI SỬA
+            // ==========================================
+            account.setPhoneNumber(request.getPhoneNumber());
             
             accountRepository.save(account);
 

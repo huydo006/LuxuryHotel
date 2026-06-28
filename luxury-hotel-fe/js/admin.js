@@ -144,7 +144,9 @@ document.getElementById('btn-confirm-approve').addEventListener('click', async (
         const response = await fetch(`http://localhost:8080/api/bookings/${currentApproveBookingId}/status`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'success' })
+            body: JSON.stringify({ status: 'success',
+                adminId: currentUser.accountId
+             })
         });
 
         const result = await response.json();
@@ -295,7 +297,9 @@ window.saveHotel = async () => {
     }
 
     // 4. Gộp vào payload gửi đi
-    const payload = { name, location, image, description, amenities };
+    const payload = { name, location, image, description, amenities ,
+        adminId: currentUser.accountId
+    };
     
     // 5. Xác định là Thêm mới (POST) hay Cập nhật (PUT)
     const method = isEditingHotel ? 'PUT' : 'POST';
@@ -458,7 +462,16 @@ window.saveRoom = async () => {
         return alert("Vui lòng nhập đầy đủ thông tin phòng!");
     }
 
-    const payload = { hotelId, roomType, capacity, price, quantity };
+    
+    const payload = { 
+        hotelId, 
+        roomType, 
+        capacity, 
+        price, 
+        quantity,
+        adminId: currentUser.accountId // <-- Dòng quan trọng nhất vừa được thêm
+    };
+    
     const method = isEditingRoom ? 'PUT' : 'POST';
     const url = isEditingRoom ? `http://localhost:8080/api/admin/rooms/${roomId}` : `http://localhost:8080/api/admin/rooms`;
 
@@ -538,7 +551,8 @@ function renderAdminCustomers(customers) {
     tbody.innerHTML = '';
 
     if (customers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">Không tìm thấy khách hàng phù hợp.</td></tr>`;
+        // ĐÃ SỬA: Đổi colspan từ 5 lên 6 cho khớp với số lượng cột mới
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b;">Không tìm thấy khách hàng phù hợp.</td></tr>`;
         return;
     }
 
@@ -549,6 +563,7 @@ function renderAdminCustomers(customers) {
             <td><strong>${c.username}</strong></td>
             <td>${c.fullName}</td>
             <td>${c.email}</td>
+            <td style="font-weight: 500; color: #334155;">${c.phoneNumber || '---'}</td>
             <td class="action-btns">
                 <button class="btn-sm btn-edit" onclick="openCustomerModal(${c.accountID})">Sửa</button>
                 <button class="btn-sm btn-delete" onclick="deleteCustomer(${c.accountID})">Xóa</button>
@@ -572,6 +587,7 @@ window.openCustomerModal = (customerId = null) => {
         document.getElementById('c-id').value = c.accountID;
         document.getElementById('c-fullname').value = c.fullName;
         document.getElementById('c-email').value = c.email;
+        document.getElementById('c-phone').value = c.phoneNumber || '';
 
         usernameInput.value = c.username;
         usernameInput.disabled = true;
@@ -581,6 +597,7 @@ window.openCustomerModal = (customerId = null) => {
         document.getElementById('c-id').value = '';
         document.getElementById('c-fullname').value = '';
         document.getElementById('c-email').value = '';
+        document.getElementById('c-phone').value = '';
 
         usernameInput.value = '';
         usernameInput.disabled = false;
@@ -600,12 +617,13 @@ window.saveCustomer = async () => {
     const email = document.getElementById('c-email').value.trim();
     const username = document.getElementById('c-username').value.trim();
     const password = document.getElementById('c-password').value;
+    const phone = document.getElementById('c-phone').value.trim();
 
     if (!fullName || !email) {
         return alert("Vui lòng nhập đầy đủ Họ tên và Email!");
     }
 
-    let payload = { fullName, email };
+    let payload = { fullName, email , phoneNumber: phone};
     let method = isEditingCustomer ? 'PUT' : 'POST';
     let url = isEditingCustomer ? `http://localhost:8080/api/admin/customers/${id}` : `http://localhost:8080/api/admin/customers`;
 
@@ -763,7 +781,8 @@ window.savePromo = async () => {
         minBookingValue: document.getElementById('p-min').value.trim() || 0, // Mặc định là 0 nếu để trống
         usageLimit: document.getElementById('p-limit').value.trim(),
         startDate: document.getElementById('p-start').value,
-        endDate: document.getElementById('p-end').value
+        endDate: document.getElementById('p-end').value,
+        adminId: currentUser.accountId
     };
 
     if (!payload.discountCode || !payload.namePromo || !payload.discountPercent || !payload.maxDiscountAmount || !payload.usageLimit || !payload.startDate || !payload.endDate) {

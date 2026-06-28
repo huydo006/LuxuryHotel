@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+import com.luxuryhotel.luxury_hotel_be.dto.BookingStatusRequest;
 
 import lombok.RequiredArgsConstructor;
 
@@ -192,7 +194,13 @@ public class BookingService {
         return details.stream().map(bd -> {
             BookingAdminDto dto = new BookingAdminDto();
             dto.setBookingID(bd.getBooking().getBookingId());
-            dto.setUsername(bd.getBooking().getAccount().getUsername());
+
+            if (bd.getBooking().getAccount() != null) {
+                dto.setUsername(bd.getBooking().getAccount().getUsername());
+            } else {
+                dto.setUsername("N/A (Tài khoản đã xóa)");
+            }
+
             dto.setHotelID(bd.getRoom().getHotel().getHotelId());
             dto.setNameHotel(bd.getRoom().getHotel().getNameHotel());
             dto.setRoomType(bd.getRoom().getRoomType());
@@ -202,25 +210,33 @@ public class BookingService {
             dto.setStatus(bd.getBooking().getStatus().name());
             dto.setPaymentReceipt(bd.getBooking().getPaymentReceipt());
             return dto;
-        }).collect(Collectors.toList());
+        }).sorted(Comparator.comparing(BookingAdminDto::getBookingID).reversed())
+        .collect(Collectors.toList());
     }
 
     // BookingService.java — chỉ sửa method updateBookingStatus
     @Transactional(rollbackFor = Exception.class)
-    public Map<String, Object> updateBookingStatus(Integer bookingId, String newStatus) {
+    public Map<String, Object> updateBookingStatus(Integer bookingId, BookingStatusRequest request) {
         Map<String, Object> response = new HashMap<>();
         try {
             Booking booking = bookingRepository.findById(bookingId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt phòng!"));
 
-            Booking.Status statusEnum = Booking.Status.valueOf(newStatus);
+            // Lấy trạng thái mới từ request
+            Booking.Status statusEnum = Booking.Status.valueOf(request.getStatus());
             booking.setStatus(statusEnum);
-            bookingRepository.save(booking);
 
             // ==========================================
-            // LOGIC MỚI: CHỈ TĂNG LƯỢT ĐẶT VÀ GỬI EMAIL KHI ADMIN DUYỆT (SUCCESS)
+            // LOGIC MỚI: CHỈ TĂNG LƯỢT ĐẶT VÀ LƯU VẾT KHI ADMIN DUYỆT (SUCCESS)
             // ==========================================
             if (statusEnum == Booking.Status.success) {
+                
+                // LƯU VẾT NGƯỜI DUYỆT ĐƠN (AUDITING)
+                if (request.getAdminId() != null) {
+                    Account admin = accountRepository.findById(request.getAdminId()).orElse(null);
+                    booking.setApprovedBy(admin);
+                }
+
                 // Lấy chi tiết đơn để dò ra khách sạn
                 List<BookingDetail> details = bookingDetailRepository.findByBooking_BookingId(bookingId);
 
@@ -234,29 +250,34 @@ public class BookingService {
                     // Lưu lại số lượt đặt mới vào Database
                     hotelRepository.save(hotel);
 
-                    // THÊM LOGIC GỬI EMAIL TẠI ĐÂY
+                    // THÊM LOGIC GỬI EMAIL TẠI ĐÂY (Đã fix lỗi Null Pointer)
                     try {
                         Account account = booking.getAccount();
-                        // Lưu ý: Hãy sửa lại các hàm getEmail(), getFullName(), getAddress()
-                        // cho đúng với tên thuộc tính trong Entity Account và Hotel của bạn
-                        String toEmail = account.getEmail();
-                        String customerName = account.getUsername(); // hoặc getFullName()
-                        String hotelName = hotel.getNameHotel();
-                        String checkIn = booking.getCheckInDate().toString();
-                        String checkOut = booking.getCheckOutDate().toString();
-                        String totalPaid = String.valueOf(booking.getTotalPrice());
-                        String hotelAddress = hotel.getAddress(); // Nếu hotel có trường address
+                        // KIỂM TRA NULL: Đảm bảo tài khoản tồn tại và có email
+                        if (account != null && account.getEmail() != null) {
+                            String toEmail = account.getEmail();
+                            String customerName = account.getUsername() != null ? account.getUsername() : "Khách hàng"; 
+                            String hotelName = hotel.getNameHotel();
+                            String checkIn = booking.getCheckInDate().toString();
+                            String checkOut = booking.getCheckOutDate().toString();
+                            String totalPaid = String.valueOf(booking.getTotalPrice());
+                            String hotelAddress = hotel.getAddress(); 
 
-                        emailService.sendBookingConfirmationEmail(
-                                toEmail, customerName, hotelName, checkIn, checkOut,
-                                String.valueOf(booking.getBookingId()), totalPaid, hotelAddress);
+                            emailService.sendBookingConfirmationEmail(
+                                    toEmail, customerName, hotelName, checkIn, checkOut,
+                                    String.valueOf(booking.getBookingId()), totalPaid, hotelAddress);
+                        } else {
+                            System.out.println("Tài khoản khách hàng bị xóa hoặc không có email");
+                        }
                     } catch (Exception e) {
                         System.err.println("Lỗi khi gửi email xác nhận: " + e.getMessage());
-                        // Có thể log lỗi ra nhưng không throw để tránh rollback việc duyệt đơn
                     }
                 }
             }
             // ==========================================
+            
+            // Lưu đơn hàng đã cập nhật trạng thái và người duyệt vào DB
+            bookingRepository.save(booking);
 
             response.put("success", true);
             response.put("message", "Đã cập nhật trạng thái đơn hàng thành công!");

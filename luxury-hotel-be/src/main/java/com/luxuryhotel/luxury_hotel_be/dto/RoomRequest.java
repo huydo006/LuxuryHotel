@@ -9,4 +9,5 @@ public class RoomRequest {
     private Integer capacity;
     private Double price;
     private Integer quantity;
+    private Integer adminId;
 }

@@ -39,9 +39,6 @@ public class Account {
     @Column(nullable = false)
     private Role role;
 
-    @Column(name = "bankAccount", length = 100)
-    private String bankAccount;
-
     // Định nghĩa Enum cho Role
     public enum Role {
         Manager, Customer

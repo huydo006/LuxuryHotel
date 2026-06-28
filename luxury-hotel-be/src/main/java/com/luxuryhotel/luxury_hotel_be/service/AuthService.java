@@ -63,6 +63,12 @@ public class AuthService {
         Account newAccount = new Account();
         newAccount.setFullName(request.getFullName());
         newAccount.setEmail(request.getEmail());
+        
+        // ==========================================
+        // LƯU THÊM SỐ ĐIỆN THOẠI
+        // ==========================================
+        newAccount.setPhoneNumber(request.getPhoneNumber()); 
+        
         newAccount.setUsername(request.getUsername());
         newAccount.setPassword(request.getPassword()); // TODO: Sau này nên mã hóa mật khẩu ở bước này
         

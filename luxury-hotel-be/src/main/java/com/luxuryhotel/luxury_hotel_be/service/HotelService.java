@@ -17,6 +17,7 @@ import com.luxuryhotel.luxury_hotel_be.dto.HotelRequest;
 import com.luxuryhotel.luxury_hotel_be.dto.ReviewDto;
 import com.luxuryhotel.luxury_hotel_be.dto.RoomSimpleDto;
 import com.luxuryhotel.luxury_hotel_be.entity.Hotel;
+import com.luxuryhotel.luxury_hotel_be.repository.AccountRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
 
@@ -43,6 +44,9 @@ public class HotelService {
 
     @Autowired
     private ReviewService reviewService;
+
+    @Autowired
+    private AccountRepository accountRepository;
 
     public List<HotelDto> getAllHotelsForDashboard() {
         // Lấy toàn bộ Entity từ DB
@@ -198,6 +202,16 @@ public class HotelService {
             } else {
                 hotel.setAmenities("");
             }
+
+            // ==========================================
+            // LƯU VẾT NGƯỜI TẠO KHÁCH SẠN (AUDITING)
+            // ==========================================
+            if (request.getAdminId() != null) {
+                com.luxuryhotel.luxury_hotel_be.entity.Account admin = 
+                    accountRepository.findById(request.getAdminId()).orElse(null);
+                hotel.setCreatedBy(admin);
+            }
+
             hotelRepository.save(hotel);
 
             response.put("success", true);

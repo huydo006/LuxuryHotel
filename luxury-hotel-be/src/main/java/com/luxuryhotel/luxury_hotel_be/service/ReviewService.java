@@ -84,7 +84,15 @@ public class ReviewService {
     public List<ReviewDto> getReviewsByHotel(Integer hotelId) {
         return reviewRepository.findByHotel_HotelId(hotelId).stream().map(review -> {
             ReviewDto dto = new ReviewDto();
-            dto.setUsername(review.getAccount().getUsername());
+            
+            // --- SỬA LỖI TẠI ĐÂY: KIỂM TRA TÀI KHOẢN XÓA ---
+            if (review.getAccount() != null) {
+                dto.setUsername(review.getAccount().getUsername());
+            } else {
+                dto.setUsername("Khách vô danh");
+            }
+            // ------------------------------------------------
+            
             dto.setRating(review.getRating());
             dto.setComment(review.getComment());
             dto.setCreatedAt(review.getCreatedAt());
@@ -96,7 +104,7 @@ public class ReviewService {
     private void validateImage(MultipartFile file) {
         String contentType = file.getContentType();
         if (contentType == null || !(contentType.equals("image/jpeg") || contentType.equals("image/png") || contentType.equals("image/webp"))) {
-            throw new IllegalArgumentException("Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP");
+            throw new IllegalArgumentException("Chỉ hỗ trợ ảnh JPG, PNG");
         }
     }
 
@@ -110,12 +118,9 @@ public class ReviewService {
             extension = originalName.substring(originalName.lastIndexOf('.'));
         }
         
-        // SỬA Ở ĐÂY: Luôn dùng UUID ngẫu nhiên để làm tên file, tránh trùng lặp 100%
         String fileName = UUID.randomUUID().toString() + extension;
-
         Path target = dir.resolve(fileName);
         
-        // Thêm StandardCopyOption.REPLACE_EXISTING để ghi đè an toàn
         java.nio.file.Files.copy(file.getInputStream(), target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         
         return fileName;
