@@ -6,6 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Comparator;
+import java.time.LocalDateTime;
+
+
+
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -170,23 +174,50 @@ public class BookingService {
             Booking booking = bookingRepository.findById(bookingId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt phòng!"));
 
-            if (booking.getStatus() != Booking.Status.processing) {
+            // 1. Chặn nếu đơn đã bị hủy từ trước
+            if (booking.getStatus() == Booking.Status.cancelled) {
                 response.put("success", false);
-                response.put("message", "Đơn hàng đã xác nhận hoặc đã hủy, không thể thao tác!");
+                response.put("message", "Đơn hàng này đã bị hủy từ trước!");
                 return response;
             }
 
+            // 2. Nếu đơn đã xác nhận (success) -> Không cho tự hủy qua API, yêu cầu gọi Hotline
+            if (booking.getStatus() == Booking.Status.success) {
+                response.put("success", false);
+                response.put("message", "Đơn hàng đã được xác nhận. Vui lòng liên hệ Hotline 1900 xxxx để hỗ trợ hủy phòng.");
+                return response;
+            }
+
+            // 3. Logic Hủy trước 2 ngày cho đơn Đang chờ duyệt (processing)
+            if (booking.getStatus() == Booking.Status.processing) {
+                // Giả định giờ nhận phòng luôn là 14:00
+                LocalDateTime checkInDateTime = booking.getCheckInDate().atTime(14, 0); 
+                LocalDateTime now = LocalDateTime.now();
+
+                // Nếu hiện tại đã vượt qua mốc "trước 2 ngày" so với giờ check-in
+                if (now.isAfter(checkInDateTime.minusDays(2))) {
+                    response.put("success", false);
+                    response.put("message", "Đã quá hạn tự hủy! Bạn chỉ được phép hủy phòng trước 2 ngày so với ngày nhận phòng.");
+                    return response;
+                }
+            }
+
+            // 4. Thực hiện hủy đơn
             booking.setStatus(Booking.Status.cancelled);
             bookingRepository.save(booking);
 
             response.put("success", true);
             response.put("message", "Đã hủy đơn đặt phòng thành công.");
+            
         } catch (Exception e) {
+            // Rollback transaction nếu có lỗi xảy ra
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             response.put("success", false);
             response.put("message", "Lỗi: " + e.getMessage());
         }
         return response;
     }
+
 
     public List<BookingAdminDto> getAllBookingsForAdmin() {
         List<BookingDetail> details = bookingDetailRepository.findAllBookingsForAdmin();

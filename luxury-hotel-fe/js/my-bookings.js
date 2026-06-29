@@ -15,7 +15,6 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 // 3. Lấy dữ liệu Lịch sử từ Backend
 async function fetchMyBookings() {
     try {
-        // ĐÃ FIX BUG: Đổi currentUser.id thành currentUser.accountId
         const res = await fetch(`http://localhost:8080/api/bookings/user/${currentUser.accountId}`);
         const bookings = await res.json();
         renderBookings(bookings);
@@ -54,10 +53,15 @@ function renderBookings(bookings) {
         } else if (b.status === 'success') {
             statusText = 'Đã xác nhận';
             statusClass = 'success';
+            // ==========================================
+            // ĐÃ SỬA: Ẩn nút Hủy, thêm thông báo gọi Hotline
+            // ==========================================
             actionBtn = `
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn-action btn-cancel" onclick="cancelMyBooking(${b.bookingID})">Hủy</button>
-                    <button class="btn-action btn-review" onclick="openReviewModal(${b.hotelID}, '${b.nameHotel}')">Đánh giá</button>
+                <div style="display: flex; gap: 8px; flex-direction: column; align-items: flex-end;">
+                    <button class="btn-action btn-review" onclick="openReviewModal(${b.hotelID}, '${b.nameHotel}')">⭐ Đánh giá</button>
+                    <span style="font-size: 0.85rem; color: #64748b; font-style: italic;">
+                        *Để hủy phòng & hoàn tiền, vui lòng gọi Hotline 0383834360
+                    </span>
                 </div>`;
         } else {
             statusText = 'Đã hủy';
@@ -88,7 +92,7 @@ function renderBookings(bookings) {
 
 // 5. Hàm xử lý Hủy phòng gọi xuống Backend
 window.cancelMyBooking = async (bookingId) => {
-    const isConfirm = confirm("Bạn có chắc chắn muốn hủy phòng này không?\n\nLưu ý: Việc hoàn tiền sẽ được áp dụng theo chính sách hủy phòng của khách sạn (nhận lại 100% nếu hủy trước 24h).");
+    const isConfirm = confirm("Bạn có chắc chắn muốn hủy phòng này không?\n\nLưu ý: Việc hoàn tiền sẽ được áp dụng theo chính sách hủy phòng của khách sạn (nhận lại 100% nếu hủy trước 48h).");
     
     if (!isConfirm) return;
 
@@ -144,7 +148,7 @@ reviewImageInput?.addEventListener('change', (e) => {
         alert('Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP. Các file không hợp lệ đã bị loại bỏ.');
     }
 
-    // TÍNH NĂNG MỚI: Cộng dồn ảnh mới vào mảng hiện tại (thay vì ghi đè)
+    // Cộng dồn ảnh mới vào mảng hiện tại (thay vì ghi đè)
     selectedReviewImages = [...selectedReviewImages, ...supported];
 
     // Reset lại ô input để lần sau có thể chọn tiếp tục 
@@ -210,7 +214,7 @@ function renderReviewImages() {
             // Sự kiện khi bấm nút X
             removeBtn.onclick = (e) => {
                 e.preventDefault();
-                e.stopPropagation(); // Ngăn sự kiện click lan ra khung lớn (chống mở hộp thoại chọn ảnh)
+                e.stopPropagation(); // Ngăn sự kiện click lan ra khung lớn
                 
                 selectedReviewImages.splice(index, 1); // Xóa file khỏi mảng
                 renderReviewImages(); // Vẽ lại giao diện
@@ -223,8 +227,6 @@ function renderReviewImages() {
         reader.readAsDataURL(file);
     });
 }
-
-
 
 // Xử lý click vào Ngôi sao
 stars.forEach(star => {
