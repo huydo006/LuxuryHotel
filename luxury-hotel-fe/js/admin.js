@@ -77,10 +77,10 @@ function renderBookings(bookings) {
             statusHtml = `<span class="status processing">Đang chờ duyệt</span>`;
         } else if (b.status === 'success') {
             statusHtml = `<span class="status success">Đã xác nhận</span>`;
-            disableBtns = 'disabled'; // Đã duyệt rồi thì khóa nút
+            disableBtns = 'disabled';
         } else {
             statusHtml = `<span class="status cancelled">Đã hủy</span>`;
-            disableBtns = 'disabled'; // Đã hủy rồi thì khóa nút
+            disableBtns = 'disabled';
         }
 
         const tr = document.createElement('tr');
@@ -95,7 +95,7 @@ function renderBookings(bookings) {
             <td style="color: #dc2626; font-weight: bold;">${b.totalPrice.toLocaleString('vi-VN')} ₫</td>
             <td>${statusHtml}</td>
             <td class="action-btns">
-                <button class="btn-sm btn-approve" ${disableBtns} onclick="updateStatus(${b.bookingID}, 'success')">Duyệt</button>
+                <button class="btn-sm btn-approve" ${disableBtns} onclick="openApproveModal(${b.bookingID}, '${b.paymentReceipt}')">Duyệt đơn</button>
                 <button class="btn-sm btn-delete" ${disableBtns} onclick="updateStatus(${b.bookingID}, 'cancelled')">Hủy</button>
             </td>
         `;
@@ -103,9 +103,74 @@ function renderBookings(bookings) {
     });
 }
 
+// ==========================================
+// THÊM MỚI: LOGIC MODAL DUYỆT ĐƠN CÓ ẢNH
+// ==========================================
+let currentApproveBookingId = null;
+
+window.openApproveModal = (bookingId, imagePath) => {
+    currentApproveBookingId = bookingId;
+    const imgEl = document.getElementById('approve-receipt-img');
+    const msgEl = document.getElementById('approve-no-receipt');
+    
+    // Nạp ảnh vào Modal
+    if (imagePath && imagePath !== 'null' && imagePath !== 'undefined') {
+        imgEl.src = `http://localhost:8080/${imagePath}`;
+        imgEl.style.display = 'block';
+        msgEl.style.display = 'none';
+    } else {
+        imgEl.src = '';
+        imgEl.style.display = 'none';
+        msgEl.style.display = 'block';
+    }
+    
+    document.getElementById('approveModal').classList.add('active');
+}
+
+// Xử lý khi Admin bấm nút "Xác Nhận Tiền & Duyệt" ở dưới ảnh
+document.getElementById('btn-confirm-approve').addEventListener('click', async () => {
+    if (!currentApproveBookingId) return;
+    
+    const btn = document.getElementById('btn-confirm-approve');
+    const originalText = btn.innerText;
+
+    // 1. Bật trạng thái Loading: Đổi chữ, làm mờ nút, đổi con trỏ chuột và KHÓA NÚT
+    btn.innerText = '⏳ Đang xử lý và gửi Email...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.style.cursor = 'wait';
+    
+    try {
+        const response = await fetch(`http://localhost:8080/api/bookings/${currentApproveBookingId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'success',
+                adminId: currentUser.accountId
+             })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert(result.message);
+            document.getElementById('approveModal').classList.remove('active');
+            fetchAllBookings(); // Tải lại danh sách
+        } else {
+            alert(result.message);
+        }
+    } catch (error) {
+        alert("Lỗi khi cập nhật trạng thái!");
+    } finally {
+        // 2. Bất kể thành công hay thất bại, khôi phục lại trạng thái ban đầu của nút
+        btn.innerText = originalText;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+    }
+});
+
+// Hàm xử lý Hủy đơn hàng (Giữ nguyên)
 window.updateStatus = async (bookingId, newStatus) => {
-    const confirmMsg = newStatus === 'success' ? 'Xác nhận duyệt đơn này?' : 'Bạn chắc chắn muốn hủy đơn này?';
-    if (!confirm(confirmMsg)) return;
+    if (!confirm('Bạn chắc chắn muốn hủy đơn này?')) return;
 
     try {
         const response = await fetch(`http://localhost:8080/api/bookings/${bookingId}/status`, {
@@ -117,7 +182,7 @@ window.updateStatus = async (bookingId, newStatus) => {
         const result = await response.json();
         if (result.success) {
             alert(result.message);
-            fetchAllBookings(); // Tải lại bảng ngay lập tức
+            fetchAllBookings(); 
         } else {
             alert(result.message);
         }
@@ -232,7 +297,9 @@ window.saveHotel = async () => {
     }
 
     // 4. Gộp vào payload gửi đi
-    const payload = { name, location, image, description, amenities };
+    const payload = { name, location, image, description, amenities ,
+        adminId: currentUser.accountId
+    };
     
     // 5. Xác định là Thêm mới (POST) hay Cập nhật (PUT)
     const method = isEditingHotel ? 'PUT' : 'POST';
@@ -395,7 +462,16 @@ window.saveRoom = async () => {
         return alert("Vui lòng nhập đầy đủ thông tin phòng!");
     }
 
-    const payload = { hotelId, roomType, capacity, price, quantity };
+    
+    const payload = { 
+        hotelId, 
+        roomType, 
+        capacity, 
+        price, 
+        quantity,
+        adminId: currentUser.accountId // <-- Dòng quan trọng nhất vừa được thêm
+    };
+    
     const method = isEditingRoom ? 'PUT' : 'POST';
     const url = isEditingRoom ? `http://localhost:8080/api/admin/rooms/${roomId}` : `http://localhost:8080/api/admin/rooms`;
 
@@ -475,7 +551,8 @@ function renderAdminCustomers(customers) {
     tbody.innerHTML = '';
 
     if (customers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">Không tìm thấy khách hàng phù hợp.</td></tr>`;
+        // ĐÃ SỬA: Đổi colspan từ 5 lên 6 cho khớp với số lượng cột mới
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #64748b;">Không tìm thấy khách hàng phù hợp.</td></tr>`;
         return;
     }
 
@@ -486,6 +563,7 @@ function renderAdminCustomers(customers) {
             <td><strong>${c.username}</strong></td>
             <td>${c.fullName}</td>
             <td>${c.email}</td>
+            <td style="font-weight: 500; color: #334155;">${c.phoneNumber || '---'}</td>
             <td class="action-btns">
                 <button class="btn-sm btn-edit" onclick="openCustomerModal(${c.accountID})">Sửa</button>
                 <button class="btn-sm btn-delete" onclick="deleteCustomer(${c.accountID})">Xóa</button>
@@ -509,6 +587,7 @@ window.openCustomerModal = (customerId = null) => {
         document.getElementById('c-id').value = c.accountID;
         document.getElementById('c-fullname').value = c.fullName;
         document.getElementById('c-email').value = c.email;
+        document.getElementById('c-phone').value = c.phoneNumber || '';
 
         usernameInput.value = c.username;
         usernameInput.disabled = true;
@@ -518,6 +597,7 @@ window.openCustomerModal = (customerId = null) => {
         document.getElementById('c-id').value = '';
         document.getElementById('c-fullname').value = '';
         document.getElementById('c-email').value = '';
+        document.getElementById('c-phone').value = '';
 
         usernameInput.value = '';
         usernameInput.disabled = false;
@@ -537,12 +617,13 @@ window.saveCustomer = async () => {
     const email = document.getElementById('c-email').value.trim();
     const username = document.getElementById('c-username').value.trim();
     const password = document.getElementById('c-password').value;
+    const phone = document.getElementById('c-phone').value.trim();
 
     if (!fullName || !email) {
         return alert("Vui lòng nhập đầy đủ Họ tên và Email!");
     }
 
-    let payload = { fullName, email };
+    let payload = { fullName, email , phoneNumber: phone};
     let method = isEditingCustomer ? 'PUT' : 'POST';
     let url = isEditingCustomer ? `http://localhost:8080/api/admin/customers/${id}` : `http://localhost:8080/api/admin/customers`;
 
@@ -700,7 +781,8 @@ window.savePromo = async () => {
         minBookingValue: document.getElementById('p-min').value.trim() || 0, // Mặc định là 0 nếu để trống
         usageLimit: document.getElementById('p-limit').value.trim(),
         startDate: document.getElementById('p-start').value,
-        endDate: document.getElementById('p-end').value
+        endDate: document.getElementById('p-end').value,
+        adminId: currentUser.accountId
     };
 
     if (!payload.discountCode || !payload.namePromo || !payload.discountPercent || !payload.maxDiscountAmount || !payload.usageLimit || !payload.startDate || !payload.endDate) {

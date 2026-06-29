@@ -17,4 +17,13 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
            "AND b.status IN ('processing', 'success') " +
            "AND b.checkOutDate >= CURRENT_DATE")
     List<Object[]> findActiveBookingsDatesByRoomId(@Param("roomId") Integer roomId);
+
+    // ==========================================
+    // LOGIC MỚI: KIỂM TRA MÃ KHUYẾN MÃI ĐÃ DÙNG HAY CHƯA
+    // ==========================================
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Booking b " +
+           "WHERE b.account.accountId = :accountId " +
+           "AND b.promotion.promotionId = :promoId " +
+           "AND b.status != 'cancelled'")
+    boolean hasUserUsedPromotion(@Param("accountId") Integer accountId, @Param("promoId") Integer promoId);
 }

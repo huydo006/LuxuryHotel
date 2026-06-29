@@ -3,10 +3,12 @@ package com.luxuryhotel.luxury_hotel_be.controller;
 import com.luxuryhotel.luxury_hotel_be.dto.BookingAdminDto;
 import com.luxuryhotel.luxury_hotel_be.dto.BookingHistoryDto;
 import com.luxuryhotel.luxury_hotel_be.dto.BookingRequest;
+import com.luxuryhotel.luxury_hotel_be.dto.BookingStatusRequest;
 import com.luxuryhotel.luxury_hotel_be.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -19,9 +21,13 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> createBooking(@RequestBody BookingRequest request) {
-        Map<String, Object> response = bookingService.createBooking(request);
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<Map<String, Object>> createBooking(
+            @RequestPart("booking") BookingRequest request,
+            @RequestPart(value = "receipt", required = false) MultipartFile receipt) {
+        
+        // Truyền thêm receipt xuống Service
+        Map<String, Object> response = bookingService.createBooking(request, receipt);
         
         if ((Boolean) response.get("success")) {
             return ResponseEntity.ok(response);
@@ -57,10 +63,10 @@ public class BookingController {
     @PutMapping("/{id}/status")
     public ResponseEntity<Map<String, Object>> updateStatus(
             @PathVariable("id") Integer id, 
-            @RequestBody Map<String, String> requestBody) { // Hứng chuỗi JSON { "status": "success" }
+            @RequestBody BookingStatusRequest request) { // SỬA LẠI: Hứng thẳng vào DTO mới
         
-        String newStatus = requestBody.get("status");
-        Map<String, Object> response = bookingService.updateBookingStatus(id, newStatus);
+        // SỬA LẠI: Truyền thẳng request (có chứa status và adminId) sang Service
+        Map<String, Object> response = bookingService.updateBookingStatus(id, request);
         
         if ((Boolean) response.get("success")) {
             return ResponseEntity.ok(response);

@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xác thực - Luxury Hotel</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
-        
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background: url('https://images.unsplash.com/photo-1578683010236-d716f9a3f461?q=80&w=2000&auto=format&fit=crop') no-repeat center center/cover;
             min-height: 100vh;
@@ -19,7 +25,10 @@
         /* Lớp phủ đen mờ */
         .overlay {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(15, 23, 42, 0.6);
             z-index: 1;
         }
@@ -31,9 +40,22 @@
             width: 450px;
             padding: 40px;
             border-radius: 16px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
+            max-height: 90vh;
+            /* Giới hạn chiều cao card bằng 90% màn hình */
+            overflow-y: auto;
         }
+
+        .auth-card::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .auth-card::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+
 
         .auth-header {
             text-align: center;
@@ -46,57 +68,110 @@
             margin-bottom: 5px;
         }
 
-        .auth-header p { color: #64748b; font-size: 0.95rem; }
-        .auth-header span { color: #d4af37; font-weight: bold; }
+        .auth-header p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
 
-        .form-group { margin-bottom: 20px; }
+        .auth-header span {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
         .form-group label {
-            display: block; margin-bottom: 8px;
-            color: #1e293b; font-weight: 600; font-size: 0.9rem;
+            display: block;
+            margin-bottom: 8px;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
-        
+
         .form-group input {
-            width: 100%; padding: 12px 15px;
-            border: 1px solid #cbd5e1; border-radius: 8px;
-            font-size: 1rem; transition: border-color 0.3s;
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
         }
-        .form-group input:focus { outline: none; border-color: #d4af37; }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #d4af37;
+        }
 
         .btn-primary {
-            width: 100%; padding: 14px;
-            background-color: #0f172a; color: #d4af37;
-            border: none; border-radius: 8px;
-            font-size: 1rem; font-weight: 700;
-            cursor: pointer; transition: 0.3s; margin-top: 10px;
+            width: 100%;
+            padding: 14px;
+            background-color: #0f172a;
+            color: #d4af37;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
         }
-        .btn-primary:hover { background-color: #1e293b; transform: translateY(-2px); }
+
+        .btn-primary:hover {
+            background-color: #1e293b;
+            transform: translateY(-2px);
+        }
 
         .switch-form {
-            text-align: center; margin-top: 25px; font-size: 0.9rem; color: #64748b;
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #64748b;
         }
-        .switch-form a { color: #d4af37; font-weight: 700; text-decoration: none; cursor: pointer; }
-        .switch-form a:hover { text-decoration: underline; }
+
+        .switch-form a {
+            color: #d4af37;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .switch-form a:hover {
+            text-decoration: underline;
+        }
 
         .error-message {
-            background: #fee2e2; color: #b91c1c;
-            padding: 10px; border-radius: 6px;
-            font-size: 0.85rem; margin-bottom: 20px;
-            display: none; border-left: 4px solid #ef4444;
-        }
-        
-        .success-message {
-            background: #dcfce7; color: #15803d;
-            padding: 10px; border-radius: 6px;
-            font-size: 0.85rem; margin-bottom: 20px;
-            display: none; border-left: 4px solid #22c55e;
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #ef4444;
         }
 
-        .hidden { display: none; }
+        .success-message {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid #22c55e;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
+
 <body>
     <div class="overlay"></div>
-    
+
     <div class="auth-card">
         <div class="auth-header">
             <h2 id="form-title">Đăng Nhập</h2>
@@ -131,6 +206,10 @@
                 <input type="email" id="r-email" required placeholder="VD: email@example.com">
             </div>
             <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="text" id="r-phone" required placeholder="VD: 0987654321">
+            </div>
+            <div class="form-group">
                 <label>Tên đăng nhập</label>
                 <input type="text" id="r-username" required placeholder="Tạo tài khoản">
             </div>
@@ -147,4 +226,5 @@
 
     <script type="module" src="./js/auth.js"></script>
 </body>
+
 </html>

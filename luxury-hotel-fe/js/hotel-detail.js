@@ -230,23 +230,57 @@ window.applyPromoCode = async () => {
 }
 
 document.getElementById('btnConfirmPayment').addEventListener('click', async () => {
+    // 1. Lấy file ảnh biên lai từ ô input có id='payment-receipt'
+    const receiptInput = document.getElementById('payment-receipt');
+    const receiptFile = receiptInput ? receiptInput.files[0] : null;
+    
+    // 2. Kiểm tra bắt buộc khách hàng phải chọn ảnh minh chứng chuyển khoản
+    if (!receiptFile) {
+        return alert("Vui lòng tải lên ảnh chụp màn hình chuyển khoản để chúng tôi xác nhận!");
+    }
+
+    // 3. Chuẩn bị dữ liệu JSON đặt phòng (giữ nguyên các thuộc tính cũ của bạn)
+    const bookingPayload = {
+        userId: currentUser.accountId, 
+        hotelId: parseInt(hotelId), 
+        roomId: selectedRoom.id,
+        promotionId: appliedPromotionID, 
+        originalPrice: baseTotal, 
+        totalPaid: finalPrice,
+        depositAmount: amountToPay, 
+        checkInDate: queryCheckIn, 
+        checkOutDate: queryCheckOut
+    };
+
+    // 4. Tạo đối tượng FormData để gửi dữ liệu đa phần (multipart/form-data)
+    const formData = new FormData();
+    
+    // Đóng gói JSON vào 1 Blob có Content-Type là application/json để @RequestPart bên Java hiểu được
+    formData.append('booking', new Blob([JSON.stringify(bookingPayload)], { type: 'application/json' }));
+    
+    // Đính kèm file ảnh minh chứng với key là 'receipt' khớp với Backend
+    formData.append('receipt', receiptFile);
+
     try {
+        // 5. Gửi request lên API
         const res = await fetch('http://localhost:8080/api/bookings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: currentUser.accountId, hotelId: parseInt(hotelId), roomId: selectedRoom.id,
-                promotionId: appliedPromotionID, originalPrice: baseTotal, totalPaid: finalPrice,
-                depositAmount: amountToPay, checkInDate: queryCheckIn, checkOutDate: queryCheckOut
-            })
+            body: formData // CHÚ Ý: Không đặt 'Content-Type' trong headers, trình duyệt sẽ tự động nhận diện boundary
         });
+        
         const data = await res.json();
+        
         if (data.success) { 
             alert(`[HỆ THỐNG] ${data.message}`); 
             modal.classList.remove('active'); 
             window.location.href = 'my-bookings.html'; 
-        } else alert("Lỗi: " + data.message);
-    } catch (e) { alert("Lỗi hệ thống!"); }
+        } else {
+            alert("Lỗi: " + data.message);
+        }
+    } catch (e) { 
+        console.error("Lỗi đặt phòng:", e);
+        alert("Lỗi hệ thống khi gửi yêu cầu đặt phòng!"); 
+    }
 });
 
 // ==========================================
@@ -337,5 +371,30 @@ document.getElementById('btnSearch').addEventListener('click', () => {
     window.location.href = `hotel-detail.html?id=${hotelId}&checkIn=${cIn.trim()}&checkOut=${cOut.trim()}&capacity=${selectedCap}`;
 });
 
+// ==========================================
+// 9. XEM TRƯỚC ẢNH BIÊN LAI TRƯỚC KHI ĐẶT
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const receiptInput = document.getElementById('payment-receipt');
+    if (receiptInput) {
+        receiptInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('preview-receipt');
+            const placeholder = document.getElementById('upload-placeholder');
+            
+            if (file) {
+                // Có file: Hiện ảnh, ẩn chữ hướng dẫn
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else {
+                // Không có file (Khách bấm Hủy): Ẩn ảnh, hiện lại chữ
+                preview.src = '';
+                preview.style.display = 'none';
+                placeholder.style.display = 'block';
+            }
+        });
+    }
+});
 // Khởi chạy
 fetchHotelDetails();

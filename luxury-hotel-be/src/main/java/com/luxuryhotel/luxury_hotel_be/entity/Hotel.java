@@ -31,6 +31,10 @@ public class Hotel {
     @Column(name = "bookingsCount")
     private Integer bookingsCount;
 
+    @ManyToOne
+    @JoinColumn(name = "createdBy_AccountID")
+    private Account createdBy;
+
     @Column(name = "amenities")
     private String amenities;
 }

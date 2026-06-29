@@ -63,7 +63,8 @@ registerForm.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 fullName: document.getElementById('r-fullname').value.trim(), // Đã có fullName chuẩn
-                email: document.getElementById('r-email').value.trim(),       // Đã có email chuẩn
+                email: document.getElementById('r-email').value.trim(), 
+                phoneNumber: document.getElementById('r-phone').value.trim(),
                 username: document.getElementById('r-username').value.trim(),
                 password: document.getElementById('r-password').value
             })

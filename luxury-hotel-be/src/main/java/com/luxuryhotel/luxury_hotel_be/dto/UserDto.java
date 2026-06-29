@@ -8,5 +8,6 @@ public class UserDto {
     private String username;
     private String fullName;
     private String email;
-    private String role; // Sẽ map "Manager" thành "admin" để khớp với JS
+    private String role;
+    private String phoneNumber;
 }

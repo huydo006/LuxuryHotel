@@ -15,7 +15,6 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 // 3. Lấy dữ liệu Lịch sử từ Backend
 async function fetchMyBookings() {
     try {
-        // ĐÃ FIX BUG: Đổi currentUser.id thành currentUser.accountId
         const res = await fetch(`http://localhost:8080/api/bookings/user/${currentUser.accountId}`);
         const bookings = await res.json();
         renderBookings(bookings);
@@ -54,10 +53,15 @@ function renderBookings(bookings) {
         } else if (b.status === 'success') {
             statusText = 'Đã xác nhận';
             statusClass = 'success';
+            // ==========================================
+            // ĐÃ SỬA: Ẩn nút Hủy, thêm thông báo gọi Hotline
+            // ==========================================
             actionBtn = `
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn-action btn-cancel" onclick="cancelMyBooking(${b.bookingID})">Hủy</button>
-                    <button class="btn-action btn-review" onclick="openReviewModal(${b.hotelID}, '${b.nameHotel}')">Đánh giá</button>
+                <div style="display: flex; gap: 8px; flex-direction: column; align-items: flex-end;">
+                    <button class="btn-action btn-review" onclick="openReviewModal(${b.hotelID}, '${b.nameHotel}')">⭐ Đánh giá</button>
+                    <span style="font-size: 0.85rem; color: #64748b; font-style: italic;">
+                        *Để hủy phòng & hoàn tiền, vui lòng gọi Hotline 0383834360
+                    </span>
                 </div>`;
         } else {
             statusText = 'Đã hủy';
@@ -88,7 +92,7 @@ function renderBookings(bookings) {
 
 // 5. Hàm xử lý Hủy phòng gọi xuống Backend
 window.cancelMyBooking = async (bookingId) => {
-    const isConfirm = confirm("Bạn có chắc chắn muốn hủy phòng này không?\n\nLưu ý: Việc hoàn tiền sẽ được áp dụng theo chính sách hủy phòng của khách sạn (nhận lại 100% nếu hủy trước 24h).");
+    const isConfirm = confirm("Bạn có chắc chắn muốn hủy phòng này không?\n\nLưu ý: Việc hoàn tiền sẽ được áp dụng theo chính sách hủy phòng của khách sạn (nhận lại 100% nếu hủy trước 48h).");
     
     if (!isConfirm) return;
 
@@ -122,8 +126,10 @@ window.openReviewModal = (hotelId, hotelName) => {
     currentReviewHotelId = hotelId;
     document.getElementById('rv-hotel-name').innerText = hotelName;
     document.getElementById('rv-comment').value = '';
-    selectedReviewImages = [];
-    reviewPreview.innerHTML = '';
+    
+    selectedReviewImages = []; // Xóa trắng mảng ảnh
+    renderReviewImages();      // Cập nhật lại UI trống
+    
     reviewImageInput.value = '';
     setRating(0); // Reset sao
     reviewModal.classList.add('active');
@@ -133,29 +139,94 @@ window.closeReviewModal = () => {
     reviewModal.classList.remove('active');
 }
 
+// Bắt sự kiện khi người dùng chọn file
 reviewImageInput?.addEventListener('change', (e) => {
     const files = Array.from(e.target.files || []);
     const supported = files.filter(file => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type));
+    
     if (supported.length !== files.length) {
-        alert('Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP. Vui lòng chọn lại file phù hợp.');
-        e.target.value = '';
-        selectedReviewImages = [];
-        reviewPreview.innerHTML = '';
-        return;
+        alert('Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP. Các file không hợp lệ đã bị loại bỏ.');
     }
 
-    selectedReviewImages = supported;
+    // Cộng dồn ảnh mới vào mảng hiện tại (thay vì ghi đè)
+    selectedReviewImages = [...selectedReviewImages, ...supported];
+
+    // Reset lại ô input để lần sau có thể chọn tiếp tục 
+    e.target.value = '';
+
+    // Gọi hàm vẽ lại giao diện
+    renderReviewImages();
+});
+
+// Hàm chuyên xử lý hiển thị ảnh và nút X
+function renderReviewImages() {
     reviewPreview.innerHTML = '';
-    selectedReviewImages.forEach(file => {
+    const uploadText = document.getElementById('rv-upload-text');
+
+    // Cập nhật dòng chữ thông báo
+    if (selectedReviewImages.length > 0) {
+        uploadText.innerText = `Đã chọn ${selectedReviewImages.length} ảnh (Nhấn để thêm ảnh)`;
+        uploadText.style.color = '#10b981';
+    } else {
+        uploadText.innerText = 'Nhấn vào đây để chọn ảnh';
+        uploadText.style.color = '#334155';
+    }
+
+    // Duyệt qua từng ảnh để hiển thị
+    selectedReviewImages.forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = (event) => {
+            // Tạo 1 div bao bọc tấm ảnh để làm khung gắn nút X
+            const imgContainer = document.createElement('div');
+            imgContainer.style.position = 'relative';
+            imgContainer.style.display = 'inline-block';
+
+            // Tạo thẻ img
             const img = document.createElement('img');
             img.src = event.target.result;
-            reviewPreview.appendChild(img);
+            // CSS trực tiếp thay thế class (để đảm bảo ko bị vỡ form)
+            img.style.width = '70px';
+            img.style.height = '70px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '8px';
+            img.style.border = '1px solid #e2e8f0';
+
+            // Tạo nút X màu đỏ
+            const removeBtn = document.createElement('span');
+            removeBtn.innerHTML = '&times;';
+            removeBtn.style.position = 'absolute';
+            removeBtn.style.top = '-6px';
+            removeBtn.style.right = '-6px';
+            removeBtn.style.background = '#ef4444';
+            removeBtn.style.color = 'white';
+            removeBtn.style.borderRadius = '50%';
+            removeBtn.style.width = '20px';
+            removeBtn.style.height = '20px';
+            removeBtn.style.display = 'flex';
+            removeBtn.style.alignItems = 'center';
+            removeBtn.style.justifyContent = 'center';
+            removeBtn.style.fontSize = '14px';
+            removeBtn.style.fontWeight = 'bold';
+            removeBtn.style.cursor = 'pointer';
+            removeBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+            removeBtn.style.zIndex = '2';
+
+            // Sự kiện khi bấm nút X
+            removeBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // Ngăn sự kiện click lan ra khung lớn
+                
+                selectedReviewImages.splice(index, 1); // Xóa file khỏi mảng
+                renderReviewImages(); // Vẽ lại giao diện
+            };
+
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(removeBtn);
+            reviewPreview.appendChild(imgContainer);
         };
         reader.readAsDataURL(file);
     });
-});
+}
 
 // Xử lý click vào Ngôi sao
 stars.forEach(star => {

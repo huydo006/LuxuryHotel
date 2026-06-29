@@ -13,4 +13,5 @@ public class PromotionRequest {
     private Integer usageLimit;
     private LocalDate startDate;
     private LocalDate endDate;
+    private Integer adminId;
 }

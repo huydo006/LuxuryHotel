@@ -1,9 +1,15 @@
 package com.luxuryhotel.luxury_hotel_be.service;
+
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.time.LocalDateTime;
+
+
+
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +30,13 @@ import com.luxuryhotel.luxury_hotel_be.repository.BookingRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.HotelRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.PromotionRepository;
 import com.luxuryhotel.luxury_hotel_be.repository.RoomRepository;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+import com.luxuryhotel.luxury_hotel_be.dto.BookingStatusRequest;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,17 +44,20 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BookingService {
 
+    @Value("${app.upload-dir:uploads/receipts}")
+    private String receiptUploadDir;
+
     private final BookingRepository bookingRepository;
     private final BookingDetailRepository bookingDetailRepository;
     private final RoomRepository roomRepository;
     private final AccountRepository accountRepository;
     private final PromotionRepository promotionRepository; // Thêm Repo Khuyến mãi
     private final HotelRepository hotelRepository;
-    
+
     private final EmailService emailService;
 
     @Transactional(rollbackFor = Exception.class)
-    public Map<String, Object> createBooking(BookingRequest request) {
+    public Map<String, Object> createBooking(BookingRequest request, MultipartFile receipt) {
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -86,6 +102,18 @@ public class BookingService {
             booking.setCheckInDate(request.getCheckInDate());
             booking.setCheckOutDate(request.getCheckOutDate());
             booking.setStatus(Booking.Status.processing);
+
+            // LƯU ẢNH BIÊN LAI (NẾU CÓ)
+            if (receipt != null && !receipt.isEmpty()) {
+                Path dir = Paths.get(receiptUploadDir);
+                Files.createDirectories(dir);
+                String extension = receipt.getOriginalFilename().substring(receipt.getOriginalFilename().lastIndexOf('.'));
+                String fileName = UUID.randomUUID() + extension;
+                Path target = dir.resolve(fileName);
+                Files.copy(receipt.getInputStream(), target);
+                
+                booking.setPaymentReceipt("receipts/" + fileName); // Lưu đường dẫn vào DB
+            }
 
             if (request.getPromotionId() != null) {
                 Promotion promotion = promotionRepository.findById(request.getPromotionId())
@@ -146,23 +174,50 @@ public class BookingService {
             Booking booking = bookingRepository.findById(bookingId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt phòng!"));
 
-            if (booking.getStatus() != Booking.Status.processing) {
+            // 1. Chặn nếu đơn đã bị hủy từ trước
+            if (booking.getStatus() == Booking.Status.cancelled) {
                 response.put("success", false);
-                response.put("message", "Đơn hàng đã xác nhận hoặc đã hủy, không thể thao tác!");
+                response.put("message", "Đơn hàng này đã bị hủy từ trước!");
                 return response;
             }
 
+            // 2. Nếu đơn đã xác nhận (success) -> Không cho tự hủy qua API, yêu cầu gọi Hotline
+            if (booking.getStatus() == Booking.Status.success) {
+                response.put("success", false);
+                response.put("message", "Đơn hàng đã được xác nhận. Vui lòng liên hệ Hotline 1900 xxxx để hỗ trợ hủy phòng.");
+                return response;
+            }
+
+            // 3. Logic Hủy trước 2 ngày cho đơn Đang chờ duyệt (processing)
+            if (booking.getStatus() == Booking.Status.processing) {
+                // Giả định giờ nhận phòng luôn là 14:00
+                LocalDateTime checkInDateTime = booking.getCheckInDate().atTime(14, 0); 
+                LocalDateTime now = LocalDateTime.now();
+
+                // Nếu hiện tại đã vượt qua mốc "trước 2 ngày" so với giờ check-in
+                if (now.isAfter(checkInDateTime.minusDays(2))) {
+                    response.put("success", false);
+                    response.put("message", "Đã quá hạn tự hủy! Bạn chỉ được phép hủy phòng trước 2 ngày so với ngày nhận phòng.");
+                    return response;
+                }
+            }
+
+            // 4. Thực hiện hủy đơn
             booking.setStatus(Booking.Status.cancelled);
             bookingRepository.save(booking);
 
             response.put("success", true);
             response.put("message", "Đã hủy đơn đặt phòng thành công.");
+            
         } catch (Exception e) {
+            // Rollback transaction nếu có lỗi xảy ra
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             response.put("success", false);
             response.put("message", "Lỗi: " + e.getMessage());
         }
         return response;
     }
+
 
     public List<BookingAdminDto> getAllBookingsForAdmin() {
         List<BookingDetail> details = bookingDetailRepository.findAllBookingsForAdmin();
@@ -170,7 +225,13 @@ public class BookingService {
         return details.stream().map(bd -> {
             BookingAdminDto dto = new BookingAdminDto();
             dto.setBookingID(bd.getBooking().getBookingId());
-            dto.setUsername(bd.getBooking().getAccount().getUsername());
+
+            if (bd.getBooking().getAccount() != null) {
+                dto.setUsername(bd.getBooking().getAccount().getUsername());
+            } else {
+                dto.setUsername("N/A (Tài khoản đã xóa)");
+            }
+
             dto.setHotelID(bd.getRoom().getHotel().getHotelId());
             dto.setNameHotel(bd.getRoom().getHotel().getNameHotel());
             dto.setRoomType(bd.getRoom().getRoomType());
@@ -178,63 +239,76 @@ public class BookingService {
             dto.setCheckOutDate(bd.getBooking().getCheckOutDate());
             dto.setTotalPrice(bd.getBooking().getTotalPrice());
             dto.setStatus(bd.getBooking().getStatus().name());
+            dto.setPaymentReceipt(bd.getBooking().getPaymentReceipt());
             return dto;
-        }).collect(Collectors.toList());
+        }).sorted(Comparator.comparing(BookingAdminDto::getBookingID).reversed())
+        .collect(Collectors.toList());
     }
 
     // BookingService.java — chỉ sửa method updateBookingStatus
     @Transactional(rollbackFor = Exception.class)
-    public Map<String, Object> updateBookingStatus(Integer bookingId, String newStatus) {
+    public Map<String, Object> updateBookingStatus(Integer bookingId, BookingStatusRequest request) {
         Map<String, Object> response = new HashMap<>();
         try {
             Booking booking = bookingRepository.findById(bookingId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt phòng!"));
 
-            Booking.Status statusEnum = Booking.Status.valueOf(newStatus);
+            // Lấy trạng thái mới từ request
+            Booking.Status statusEnum = Booking.Status.valueOf(request.getStatus());
             booking.setStatus(statusEnum);
-            bookingRepository.save(booking);
 
             // ==========================================
-            // LOGIC MỚI: CHỈ TĂNG LƯỢT ĐẶT VÀ GỬI EMAIL KHI ADMIN DUYỆT (SUCCESS)
+            // LOGIC MỚI: CHỈ TĂNG LƯỢT ĐẶT VÀ LƯU VẾT KHI ADMIN DUYỆT (SUCCESS)
             // ==========================================
             if (statusEnum == Booking.Status.success) {
+                
+                // LƯU VẾT NGƯỜI DUYỆT ĐƠN (AUDITING)
+                if (request.getAdminId() != null) {
+                    Account admin = accountRepository.findById(request.getAdminId()).orElse(null);
+                    booking.setApprovedBy(admin);
+                }
+
                 // Lấy chi tiết đơn để dò ra khách sạn
                 List<BookingDetail> details = bookingDetailRepository.findByBooking_BookingId(bookingId);
-                
+
                 if (!details.isEmpty()) {
                     Room room = details.get(0).getRoom();
                     Hotel hotel = room.getHotel();
-                    
+
                     int currentCount = hotel.getBookingsCount() != null ? hotel.getBookingsCount() : 0;
                     hotel.setBookingsCount(currentCount + 1);
-                    
+
                     // Lưu lại số lượt đặt mới vào Database
                     hotelRepository.save(hotel);
 
-                    // THÊM LOGIC GỬI EMAIL TẠI ĐÂY
+                    // THÊM LOGIC GỬI EMAIL TẠI ĐÂY (Đã fix lỗi Null Pointer)
                     try {
                         Account account = booking.getAccount();
-                        // Lưu ý: Hãy sửa lại các hàm getEmail(), getFullName(), getAddress() 
-                        // cho đúng với tên thuộc tính trong Entity Account và Hotel của bạn
-                        String toEmail = account.getEmail(); 
-                        String customerName = account.getUsername(); // hoặc getFullName()
-                        String hotelName = hotel.getNameHotel();
-                        String checkIn = booking.getCheckInDate().toString();
-                        String checkOut = booking.getCheckOutDate().toString();
-                        String totalPaid = String.valueOf(booking.getTotalPrice());
-                        String hotelAddress = hotel.getAddress(); // Nếu hotel có trường address
+                        // KIỂM TRA NULL: Đảm bảo tài khoản tồn tại và có email
+                        if (account != null && account.getEmail() != null) {
+                            String toEmail = account.getEmail();
+                            String customerName = account.getUsername() != null ? account.getUsername() : "Khách hàng"; 
+                            String hotelName = hotel.getNameHotel();
+                            String checkIn = booking.getCheckInDate().toString();
+                            String checkOut = booking.getCheckOutDate().toString();
+                            String totalPaid = String.valueOf(booking.getTotalPrice());
+                            String hotelAddress = hotel.getAddress(); 
 
-                        emailService.sendBookingConfirmationEmail(
-                                toEmail, customerName, hotelName, checkIn, checkOut,
-                                String.valueOf(booking.getBookingId()), totalPaid, hotelAddress
-                        );
+                            emailService.sendBookingConfirmationEmail(
+                                    toEmail, customerName, hotelName, checkIn, checkOut,
+                                    String.valueOf(booking.getBookingId()), totalPaid, hotelAddress);
+                        } else {
+                            System.out.println("Tài khoản khách hàng bị xóa hoặc không có email");
+                        }
                     } catch (Exception e) {
                         System.err.println("Lỗi khi gửi email xác nhận: " + e.getMessage());
-                        // Có thể log lỗi ra nhưng không throw để tránh rollback việc duyệt đơn
                     }
                 }
             }
             // ==========================================
+            
+            // Lưu đơn hàng đã cập nhật trạng thái và người duyệt vào DB
+            bookingRepository.save(booking);
 
             response.put("success", true);
             response.put("message", "Đã cập nhật trạng thái đơn hàng thành công!");
@@ -245,5 +319,5 @@ public class BookingService {
         }
         return response;
     }
-    
+
 }

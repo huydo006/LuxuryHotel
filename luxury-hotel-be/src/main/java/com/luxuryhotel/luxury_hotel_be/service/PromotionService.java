@@ -3,7 +3,10 @@ package com.luxuryhotel.luxury_hotel_be.service;
 import com.luxuryhotel.luxury_hotel_be.dto.PromoApplyRequest;
 import com.luxuryhotel.luxury_hotel_be.dto.PromotionDto;
 import com.luxuryhotel.luxury_hotel_be.dto.PromotionRequest;
+import com.luxuryhotel.luxury_hotel_be.entity.Account; 
 import com.luxuryhotel.luxury_hotel_be.entity.Promotion;
+import com.luxuryhotel.luxury_hotel_be.repository.AccountRepository; 
+import com.luxuryhotel.luxury_hotel_be.repository.BookingRepository; // <-- ĐÃ THÊM IMPORT NÀY
 import com.luxuryhotel.luxury_hotel_be.repository.PromotionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,14 @@ public class PromotionService {
 
     @Autowired
     private PromotionRepository promotionRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    // --- ĐÃ THÊM BOOKING REPOSITORY TẠI ĐÂY ---
+    @Autowired
+    private BookingRepository bookingRepository;
+    // ------------------------------------------
 
     // ============================================
     // PHẦN DÀNH CHO ADMIN
@@ -51,6 +62,11 @@ public class PromotionService {
         p.setEndDate(request.getEndDate());
         p.setUsedCount(0);
         p.setIsValid(1); // Mặc định là bật
+
+        if (request.getAdminId() != null) {
+            Account admin = accountRepository.findById(request.getAdminId()).orElse(null);
+            p.setCreatedBy(admin);
+        }
 
         promotionRepository.save(p);
         response.put("success", true);
@@ -126,6 +142,19 @@ public class PromotionService {
             response.put("message", "Đơn hàng chưa đạt giá trị tối thiểu (" + p.getMinBookingValue() + "đ) để dùng mã này!");
             return response;
         }
+
+        // ==========================================
+        // LOGIC MỚI: CHẶN DÙNG MÃ NHIỀU LẦN
+        // ==========================================
+        if (request.getUserId() != null) {
+            boolean alreadyUsed = bookingRepository.hasUserUsedPromotion(request.getUserId(), p.getPromotionId());
+            if (alreadyUsed) {
+                response.put("success", false);
+                response.put("message", "Bạn đã sử dụng mã khuyến mãi này cho một đơn đặt phòng khác rồi!");
+                return response;
+            }
+        }
+        // ==========================================
 
         // Tính toán số tiền được giảm
         double calculatedDiscount = (request.getBookingTotal() * p.getDiscountPercent()) / 100;

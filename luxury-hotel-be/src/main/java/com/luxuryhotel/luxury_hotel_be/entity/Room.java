@@ -23,6 +23,10 @@ public class Room {
     @Column(name = "roomType", nullable = false, length = 100)
     private String roomType;
 
+    @ManyToOne
+    @JoinColumn(name = "createdBy_AccountID")
+    private Account createdBy;
+
     @Column(name = "quantity")
     private Integer quantity; // TỔNG QUỸ PHÒNG CỐ ĐỊNH
 

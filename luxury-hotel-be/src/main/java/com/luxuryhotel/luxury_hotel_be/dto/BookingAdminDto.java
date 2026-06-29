@@ -14,4 +14,5 @@ public class BookingAdminDto {
     private LocalDate checkOutDate;
     private Double totalPrice;
     private String status;
+    private String paymentReceipt;
 }

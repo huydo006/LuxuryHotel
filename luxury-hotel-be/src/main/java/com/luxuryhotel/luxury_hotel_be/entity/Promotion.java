@@ -38,6 +38,10 @@ public class Promotion {
     @Column(name = "startDate", nullable = false)
     private LocalDate startDate;
 
+    @ManyToOne
+    @JoinColumn(name = "createdBy_AccountID")
+    private Account createdBy;
+
     @Column(name = "endDate", nullable = false)
     private LocalDate endDate;
 
